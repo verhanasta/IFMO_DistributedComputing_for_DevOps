@@ -29,4 +29,5 @@ jobs:
       - name: run-ansible-lint
         uses: ansible/ansible-lint@v25.2.1
         with:
+          args: "-c .ansible-lint.yaml"
           setup_python: "true"

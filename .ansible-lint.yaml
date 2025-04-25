@@ -1,0 +1,11 @@
+---
+# .ansible-lint
+
+profile: basic # min, basic, moderate,safety, shared, production
+
+exclude_paths:
+  - .github/workflows/
+
+parseable: true
+use_default_rules: true
+verbosity: 1
