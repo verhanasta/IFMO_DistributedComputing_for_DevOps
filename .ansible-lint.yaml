@@ -1,8 +1,6 @@
 ---
 # .ansible-lint
 
-profile: basic # min, basic, moderate,safety, shared, production
-
 exclude_paths:
   - .github/workflows/
 

@@ -31,5 +31,5 @@ jobs:
       - name: run-ansible-lint
         uses: ansible/ansible-lint@v25.2.1
         with:
-          args: "--profile basic --exclude .github/workflows/ --parseable -v"
+          args: "--exclude .github/workflows/ --parseable -v"
           setup_python: "true"
