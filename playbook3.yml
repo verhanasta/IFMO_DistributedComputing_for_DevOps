@@ -1,0 +1,8 @@
+---
+- name: Home work 3
+  hosts: carrier
+  tasks:
+    - name: Display Configuration Variables
+      ansible.builtin.debug:
+        msg:
+          - "monitoring_url: {{ monitoring_url }}" # monitoring url including port
