@@ -8,6 +8,6 @@
           - "wordpress: {{ is_wordpress }}" # True or False
           - "wordpress_port: {{ wordpress_port }}" # 80 or 8080 or whatewer
           - "wordpress_db_name: {{ wordpress_db_name }}" # WP database name
-          - "db_maser: {{ db_maser }}" # container name
+          - "db_master: {{ db_master }}" # container name
           - "db_replica: {{ db_replica }}" # container name
           - "db_pass: {{ db_pass }}" # root password for master and replica
