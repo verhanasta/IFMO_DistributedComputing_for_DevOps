@@ -1,41 +1,36 @@
-- name: Установка MySQL на реплике
-  apt:
-    name: mysql-server
-    state: present
-    update_cache: true
+---
+- name: Создаём директорию для конфигов реплики
+  file:
+    path: /opt/wordpress/config
+    state: directory
+    mode: 0755
 
-- name: Копирование my.cnf на реплику
+- name: Разворачиваем конфиг реплики
   template:
-    src: my.cnf.j2
-    dest: /etc/mysql/my.cnf
-  notify: Перезапуск MySQL
+    src: replica.cnf.j2
+    dest: /opt/wordpress/config/replica.cnf
+    mode: 0644
 
-- name: Запуск и включение MySQL
-  service:
-    name: mysql
-    state: started
-    enabled: true
+- name: Проверяем доступность мастера
+  wait_for:
+    host: mysql_master
+    port: 3306
+    delay: 10
+    timeout: 120
 
-- name: Копирование master log info
-  fetch:
-    src: /tmp/master_status.txt
-    dest: /tmp/master_status.txt
-    flat: yes
+- name: Настраиваем репликацию
+  command: |
+    docker exec mysql_replica mysql -uroot -p{{ mysql_root_password }} -e "
+    CHANGE MASTER TO
+    MASTER_HOST='mysql_master',
+    MASTER_USER='replicator',
+    MASTER_PASSWORD='{{ replication_password }}',
+    MASTER_AUTO_POSITION=1;
+    START SLAVE;"
+  register: replica_setup
+  failed_when: "'ERROR' in replica_setup.stderr"
 
-- name: Чтение параметров логов мастера
-  set_fact:
-    log_file: "{{ lookup('file', '/tmp/master_status.txt') | regex_search('log_file=(.*)', '\\1') }}"
-    log_pos: "{{ lookup('file', '/tmp/master_status.txt') | regex_search('log_pos=(.*)', '\\1') }}"
-
-- name: Настройка мастера
-  mysql_replication:
-    mode: changereplica
-    master_host: "{{ hostvars['{{ host }}'].inventory_hostname }}"
-    master_user: replica  # Имя пользователя для подключения к мастеру
-    master_password: repl_pass  # Пароль пользователя репликации
-    master_log_file: "{{ log_file }}"  # Имя бинарного лога мастера
-    master_log_pos: "{{ log_pos | int }}"  # Позиция в бинарном логе мастера
-
-- name: Запуск репликации
-  mysql_replication:
-    mode: startreplica
+- name: Проверяем статус репликации
+  command: docker exec mysql_replica mysql -uroot -p{{ mysql_root_password }} -e "SHOW SLAVE STATUS\G"
+  register: replication_status
+  changed_when: false
