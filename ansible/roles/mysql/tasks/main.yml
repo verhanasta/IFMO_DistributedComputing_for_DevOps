@@ -39,8 +39,8 @@
     priv: '*.*:REPLICATION SLAVE'
     host: '%'
     state: present
-    login_user: root
-    login_password: rootpass  # Замените на ваш root-пароль
+    login_user: replicator_user
+    login_password: replicator_password
 
 - name: Получение бинарного лога и позиции
   mysql_replication:
