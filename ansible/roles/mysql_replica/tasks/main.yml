@@ -16,7 +16,7 @@
     host: mysql_master
     port: 3306
     delay: 10
-    timeout: 120
+    timeout: 60
 
 - name: Настраиваем репликацию
   command: |
