@@ -1,9 +1,9 @@
 <?php
 /** Настройки подключения к базе данных **/
-define( 'DB_NAME', 'wordpress' );
-define( 'DB_USER', 'wordpress' );
-define( 'DB_PASSWORD', 'rootpass' );
-define( 'DB_HOST', 'db-master:3306' );
+define('DB_NAME', '{{ wp_db_name }}');
+define('DB_USER', '{{ wp_db_user }}');
+define('DB_PASSWORD', '{{ wp_db_password }}');
+define('DB_HOST', 'mysql_master');
 
 /* Остальные настройки */
 define( 'DB_CHARSET', 'utf8' );

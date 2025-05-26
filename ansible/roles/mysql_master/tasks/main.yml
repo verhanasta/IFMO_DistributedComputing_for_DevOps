@@ -1,0 +1,40 @@
+- name: Создание директории конфигов
+  file:
+    path: /opt/wordpress/config
+    state: directory
+    mode: 0755
+
+- name: Развертывание конфига мастера
+  template:
+    src: "roles/mysql_master/templates/master.cnf.j2"
+    dest: "/opt/wordpress/config/master.cnf"
+    mode: 0644
+
+- name: Копирование docker-compose
+  template:
+    src: "docker-compose.yml.j2"
+    dest: "/opt/wordpress/docker-compose.yml"
+    mode: 0644
+
+- name: Запуск контейнеров
+  command: docker-compose up -d
+  args:
+    chdir: /opt/wordpress
+
+- name: Ожидание готовности MySQL
+  wait_for:
+    port: 3306
+    host: mysql_master
+    delay: 10
+    timeout: 300
+
+- name: Настройка пользователя репликации
+  mysql_user:
+    login_host: mysql_master
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    name: replicator
+    host: '%'
+    password: "{{ replication_password }}"
+    priv: '*.*:REPLICATION SLAVE'
+    state: present

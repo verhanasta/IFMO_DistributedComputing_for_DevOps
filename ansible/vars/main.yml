@@ -1,0 +1,16 @@
+# Настройки Docker
+docker_compose_version: "3.8"
+
+# Настройки WordPress
+wp_version: "6.4"
+wp_port: 80
+wp_data_dir: "/var/www/html"
+
+# Настройки MySQL
+mysql_version: "5.7"
+mysql_master_data_dir: "/var/lib/mysql"
+mysql_replica_data_dir: "/var/lib/mysql"
+
+# Настройки сети
+docker_network_name: "wp_network"
+docker_network_driver: "bridge"

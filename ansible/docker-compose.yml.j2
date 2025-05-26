@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:6.4
+    container_name: wp_app
+    ports:
+      - "80:80"
+    volumes:
+      - wordpress_data:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: mysql_master
+      WORDPRESS_DB_USER: "{{ wp_db_user }}"
+      WORDPRESS_DB_PASSWORD: "{{ wp_db_password }}"
+      WORDPRESS_DB_NAME: "{{ wp_db_name }}"
+    networks:
+      - wp_network
+
+  mysql_master:
+    image: mysql:5.7
+    container_name: mysql_master
+    command: --server-id=1 --log-bin=mysql-bin --binlog-format=ROW
+    environment:
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+      MYSQL_DATABASE: "{{ wp_db_name }}"
+      MYSQL_USER: "{{ wp_db_user }}"
+      MYSQL_PASSWORD: "{{ wp_db_password }}"
+    volumes:
+      - mysql_master_data:/var/lib/mysql
+      - ./config/master.cnf:/etc/mysql/conf.d/replication.cnf
+    networks:
+      - wp_network
+
+  mysql_replica:
+    image: mysql:5.7
+    container_name: mysql_replica
+    command: --server-id=2
+    environment:
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+    volumes:
+      - mysql_replica_data:/var/lib/mysql
+      - ./config/replica.cnf:/etc/mysql/conf.d/replication.cnf
+    networks:
+      - wp_network
+
+volumes:
+  wordpress_data:
+  mysql_master_data:
+  mysql_replica_data:
+
+networks:
+  wp_network:

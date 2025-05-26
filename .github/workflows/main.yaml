@@ -8,30 +8,35 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     env:
-      ANSIBLE_HOST_KEY_CHECKING: false
+      ANSIBLE_HOST_KEY_CHECKING: "False"
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Ansible
-        run: sudo apt-get update && sudo apt-get install -y ansible
-
-      - name: Set up SSH key
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          echo "Host *" > ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
 
-      - name: Create inventory file
+      - name: Create inventory
         run: |
           echo "[wordpress]" > ansible/inventory.ini
           echo "${{ secrets.SSH_HOST }} ansible_user=${{ secrets.SSH_USER }} ansible_ssh_private_key_file=~/.ssh/deploy_key" >> ansible/inventory.ini
 
-      - name: Run Ansible playbook
+      - name: Install Ansible
+        run: sudo apt-get update && sudo apt-get install -y ansible
+
+      - name: Run playbook
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/setup.yml \
             --extra-vars "mysql_root_password=${{ secrets.MYSQL_ROOT_PASSWORD }} \
-                         replication_password=${{ secrets.REPLICATION_PASSWORD }}"
+                         replication_password=${{ secrets.REPLICATION_PASSWORD }} \
+                         wp_db_user=${{ secrets.WP_DB_USER }} \
+                         wp_db_password=${{ secrets.WP_DB_PASSWORD }} \
+                         wp_db_name=${{ secrets.WP_DB_NAME }}"

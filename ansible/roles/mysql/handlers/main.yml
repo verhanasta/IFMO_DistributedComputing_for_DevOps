@@ -1,4 +1,0 @@
-- name: Перезапуск MySQL
-  service:
-    name: mysql
-    state: restarted
