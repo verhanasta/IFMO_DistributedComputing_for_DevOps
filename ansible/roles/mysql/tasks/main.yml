@@ -29,7 +29,7 @@
     content: |
       [client]
       user=root
-      password=rootpass  # Замените на ваш root-пароль
+      password=examplepass  # Замените на ваш root-пароль
     mode: '0600'
 
 - name: Создание репликационного пользователя
