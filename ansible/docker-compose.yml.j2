@@ -18,14 +18,10 @@ services:
 
   mysql_master:
     image: mysql:5.7
-    container_name: mysql_master
-    command: --server-id=1 --log-bin=mysql-bin --binlog-format=ROW --explicit_defaults_for_timestamp=1
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+    command:
+      - --explicit_defaults_for_timestamp=1
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
       MYSQL_DATABASE: "{{ wp_db_name }}"
@@ -33,7 +29,13 @@ services:
       MYSQL_PASSWORD: "{{ wp_db_password }}"
     volumes:
       - mysql_master_data:/var/lib/mysql
-      - ./config/master.cnf:/etc/mysql/conf.d/replication.cnf
+      - ./config/master.cnf:/etc/mysql/conf.d/config.cnf
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
     networks:
       - wp_network
 
