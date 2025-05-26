@@ -1,0 +1,37 @@
+- name: Установка MySQL
+  apt:
+    name: mysql-server
+    state: present
+    update_cache: true
+
+- name: Копирование my.cnf
+  template:
+    src: my.cnf.j2
+    dest: /etc/mysql/my.cnf
+  notify: Перезапуск MySQL
+
+- name: Запуск MySQL и включение автозапуска
+  service:
+    name: mysql
+    state: started
+    enabled: true
+
+- name: Создание репликационного пользователя
+  mysql_user:
+    name: replica
+    password: repl_pass
+    priv: '*.*:REPLICATION SLAVE'
+    host: '%'
+    state: present
+
+- name: Получение бинарного лога и позиции
+  mysql_replication:
+    mode: getprimary
+  register: master_status
+
+- name: Сохранение master log info в файл
+  copy:
+    content: |
+      log_file={{ master_status.File }}  # Имя бинарного лога мастера
+      log_pos={{ master_status.Position }}  # Позиция в бинарном логе
+    dest: /tmp/master_status.txt

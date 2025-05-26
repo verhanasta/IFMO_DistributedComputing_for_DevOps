@@ -1,0 +1,41 @@
+- name: Установка MySQL на реплике
+  apt:
+    name: mysql-server
+    state: present
+    update_cache: true
+
+- name: Копирование my.cnf на реплику
+  template:
+    src: my.cnf.j2
+    dest: /etc/mysql/my.cnf
+  notify: Перезапуск MySQL
+
+- name: Запуск и включение MySQL
+  service:
+    name: mysql
+    state: started
+    enabled: true
+
+- name: Копирование master log info
+  fetch:
+    src: /tmp/master_status.txt
+    dest: /tmp/master_status.txt
+    flat: yes
+
+- name: Чтение параметров логов мастера
+  set_fact:
+    log_file: "{{ lookup('file', '/tmp/master_status.txt') | regex_search('log_file=(.*)', '\\1') }}"
+    log_pos: "{{ lookup('file', '/tmp/master_status.txt') | regex_search('log_pos=(.*)', '\\1') }}"
+
+- name: Настройка мастера
+  mysql_replication:
+    mode: changereplica
+    master_host: "{{ hostvars['{{ host }}'].inventory_hostname }}"
+    master_user: replica  # Имя пользователя для подключения к мастеру
+    master_password: repl_pass  # Пароль пользователя репликации
+    master_log_file: "{{ log_file }}"  # Имя бинарного лога мастера
+    master_log_pos: "{{ log_pos | int }}"  # Позиция в бинарном логе мастера
+
+- name: Запуск репликации
+  mysql_replication:
+    mode: startreplica

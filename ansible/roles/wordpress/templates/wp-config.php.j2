@@ -1,0 +1,22 @@
+<?php
+/** Настройки подключения к базе данных **/
+define( 'DB_NAME', 'wordpress' );
+define( 'DB_USER', 'root' );
+define( 'DB_PASSWORD', 'rootpass' );
+define( 'DB_HOST', 'db-master:3306' );
+
+/* Остальные настройки */
+define( 'DB_CHARSET', 'utf8' );
+define( 'DB_COLLATE', '' );
+
+/* Секретные ключи */
+define('AUTH_KEY', 'your-secret-key');
+// и т.д.
+
+$table_prefix = 'wp_';
+define( 'WP_DEBUG', false );
+
+if ( ! defined( 'ABSPATH' ) ) {
+	define( 'ABSPATH', __DIR__ . '/' );
+}
+require_once ABSPATH . 'wp-settings.php';
