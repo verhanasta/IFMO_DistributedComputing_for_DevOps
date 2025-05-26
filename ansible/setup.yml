@@ -16,5 +16,4 @@
   roles:
     - common
     - mysql_master
-    - wordpress
     - mysql_replica

@@ -1,13 +1,3 @@
-- name: Очистка предыдущих контейнеров и томов
-  become: yes
-  shell: |
-    docker-compose down -v || true
-    docker rm -f mysql_master || true
-    docker volume rm -f wordpress_mysql_master_data || true
-    rm -rf /opt/wordpress/config/*
-  args:
-    chdir: /opt/wordpress
-
 - name: Установка зависимостей
   apt:
     name:

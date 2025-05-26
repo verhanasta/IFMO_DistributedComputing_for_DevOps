@@ -1,4 +1,3 @@
----
 - name: Создаём директорию для конфигов реплики
   file:
     path: /opt/wordpress/config
