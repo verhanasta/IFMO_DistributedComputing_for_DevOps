@@ -23,14 +23,14 @@
     state: started
     enabled: true
 
-- name: Создание ~/.my.cnf с root-паролем
-  copy:
-    dest: /root/.my.cnf
-    content: |
-      [client]
-      user=root
-      password=examplepass  # Замените на ваш root-пароль
-    mode: '0600'
+#- name: Создание ~/.my.cnf с root-паролем
+#  copy:
+#    dest: /root/.my.cnf
+#    content: |
+#      [client]
+#      user=root
+#      password=examplepass  # Замените на ваш root-пароль
+#    mode: '0600'
 
 - name: Создание репликационного пользователя
   mysql_user:
@@ -39,6 +39,8 @@
     priv: '*.*:REPLICATION SLAVE'
     host: '%'
     state: present
+    login_user: root
+    login_password: rootpass  # Замените на ваш root-пароль
 
 - name: Получение бинарного лога и позиции
   mysql_replication:
