@@ -28,7 +28,7 @@
 
 - name: Проверяем доступность мастера
   wait_for:
-    host: mysql_master
+    host: 127.0.0.1
     port: 3306
     delay: 10
     timeout: 60
