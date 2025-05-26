@@ -2,7 +2,8 @@ name: Deploy WordPress with MySQL Replication
 
 on:
   push:
-    branches: [ DZ 2 ]
+    branches:
+      - DZ2
 
 jobs:
   deploy:
@@ -13,12 +14,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Ansible
-        run: |
-          sudo apt update
-          sudo apt install -y ansible
+        run: sudo apt-get update && sudo apt-get install -y ansible
 
       - name: Set up SSH key
         run: |
@@ -32,5 +31,4 @@ jobs:
           echo "${{ secrets.SSH_HOST }} ansible_user=${{ secrets.SSH_USER }} ansible_ssh_private_key_file=~/.ssh/deploy_key" >> ansible/inventory.ini
 
       - name: Run Ansible playbook
-        run: |
-          ansible-playbook -i ansible/inventory.ini ansible/setup.yml
+        run: ansible-playbook -i ansible/inventory.ini ansible/setup.yml
