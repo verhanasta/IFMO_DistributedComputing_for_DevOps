@@ -4,20 +4,20 @@
     state: present
     update_cache: true
 
-- name: Создать директорию /home/ubuntu
-  file:
-    path: /home/ubuntu
-    state: directory
-    owner: ubuntu
-    group: ubuntu
-    mode: '0755'
+#- name: Создать директорию /home/ubuntu
+#  file:
+#    path: /home
+#    state: directory
+#    owner: ubuntu
+#    group: ubuntu
+#    mode: '0755'
 
 - name: Копирование docker-compose файла
   copy:
     src: ../../../docker-compose.yml
-    dest: /home/ubuntu/docker-compose.yml
+    dest: /home/docker-compose.yml
 
 - name: Запуск docker-compose
   command: docker-compose up -d
   args:
-    chdir: /home/ubuntu
+    chdir: /home
