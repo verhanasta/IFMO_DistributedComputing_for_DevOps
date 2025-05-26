@@ -23,6 +23,15 @@
     state: started
     enabled: true
 
+- name: Создание ~/.my.cnf с root-паролем
+  copy:
+    dest: /root/.my.cnf
+    content: |
+      [client]
+      user=replicator
+      password=replicator
+    mode: '0600'
+
 - name: Создание репликационного пользователя
   mysql_user:
     name: replica
