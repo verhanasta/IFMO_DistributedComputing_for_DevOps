@@ -17,6 +17,7 @@ services:
       - wp_network
 
   mysql_master:
+    container_name: mysql_master
     image: mysql:5.7
     environment:
       MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
