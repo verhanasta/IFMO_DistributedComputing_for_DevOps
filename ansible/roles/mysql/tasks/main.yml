@@ -34,8 +34,8 @@
 
 - name: Создание репликационного пользователя
   mysql_user:
-    name: replica
-    password: repl_pass
+    name: replicator
+    password: replication_password
     priv: '*.*:REPLICATION SLAVE'
     host: '%'
     state: present
