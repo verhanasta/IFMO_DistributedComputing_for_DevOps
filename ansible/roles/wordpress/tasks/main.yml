@@ -6,7 +6,7 @@
 
 - name: Копирование docker-compose файла
   copy:
-    src: ../docker-compose.yml
+    src: ../../../docker-compose.yml
     dest: /home/ubuntu/docker-compose.yml
 
 - name: Запуск docker-compose
