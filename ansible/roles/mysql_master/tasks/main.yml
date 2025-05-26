@@ -21,13 +21,13 @@
   args:
     chdir: /opt/wordpress
 
-#- name: Ожидание готовности MySQL мастера
-#  wait_for:
-#    host: mysql_master
-#    port: 3306
-#    delay: 5
-#    timeout: 120
-#    sleep: 5
+- name: Ожидание готовности MySQL мастера
+  wait_for:
+    host: 127.0.0.1
+    port: 3306
+    delay: 5
+    timeout: 60
+    sleep: 5
 
 - name: Настройка пользователя репликации
   mysql_user:

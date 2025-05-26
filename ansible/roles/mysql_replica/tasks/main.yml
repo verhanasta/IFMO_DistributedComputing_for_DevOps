@@ -6,8 +6,8 @@
 
 - name: Разворачиваем конфиг реплики
   template:
-    src: replica.cnf.j2
-    dest: /opt/wordpress/config/replica.cnf
+    src: "roles/mysql_replica/templates/replica.cnf.j2"
+    dest: "/opt/wordpress/config/replica.cnf"
     mode: 0644
 
 - name: Проверить состояние контейнера
