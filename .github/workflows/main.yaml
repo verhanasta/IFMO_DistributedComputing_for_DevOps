@@ -1,35 +1,36 @@
-name: Deploy WordPress with Ansible
+name: Deploy WordPress with MySQL Replication
 
 on:
   push:
-    branches:
-      - DZ2
+    branches: [ DZ 2 ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     env:
-      HOST: ${{ secrets.REMOTE_HOST }}
-      SSH_USER: ${{ secrets.REMOTE_USER }}
+      ANSIBLE_HOST_KEY_CHECKING: false
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
+
+      - name: Install Ansible
+        run: |
+          sudo apt update
+          sudo apt install -y ansible
 
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
 
-      - name: Install Ansible
-        run: sudo apt-get update && sudo apt-get install -y ansible
-
-      - name: Prepare inventory file
+      - name: Create inventory file
         run: |
           echo "[wordpress]" > ansible/inventory.ini
-          echo "$HOST ansible_user=$SSH_USER ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ansible/inventory.ini
+          echo "${{ secrets.SSH_HOST }} ansible_user=${{ secrets.SSH_USER }} ansible_ssh_private_key_file=~/.ssh/deploy_key" >> ansible/inventory.ini
 
       - name: Run Ansible playbook
-        run: ansible-playbook -i ansible/inventory.ini ansible/setup.yml
+        run: |
+          ansible-playbook -i ansible/inventory.ini ansible/setup.yml
