@@ -31,7 +31,8 @@
 
 - name: Настройка пользователя репликации
   mysql_user:
-    login_host: mysql_master
+    login_host: 127.0.0.1
+    login_port: 3306
     login_user: root
     login_password: "{{ mysql_root_password }}"
     name: replicator
