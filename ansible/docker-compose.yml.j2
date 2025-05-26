@@ -17,7 +17,7 @@ services:
       - wp_network
 
   mysql_master:
-    image: mysql:5.7-alpine
+    image: mysql:5.7
     container_name: mysql_master
     command: --server-id=1 --log-bin=mysql-bin --binlog-format=ROW
     environment:
@@ -32,7 +32,7 @@ services:
       - wp_network
 
   mysql_replica:
-    image: mysql:5.7-alpine
+    image: mysql:5.7
     container_name: mysql_replica
     command: --server-id=2
     environment:
