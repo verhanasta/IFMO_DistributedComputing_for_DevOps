@@ -1,3 +1,10 @@
+- name: Установка зависимостей Python для работы с MySQL
+  apt:
+    name:
+      - python3-pymysql
+    state: present
+    update_cache: true
+
 - name: Установка MySQL
   apt:
     name: mysql-server
