@@ -31,4 +31,7 @@ jobs:
           echo "${{ secrets.SSH_HOST }} ansible_user=${{ secrets.SSH_USER }} ansible_ssh_private_key_file=~/.ssh/deploy_key" >> ansible/inventory.ini
 
       - name: Run Ansible playbook
-        run: ansible-playbook -i ansible/inventory.ini ansible/setup.yml
+        run: |
+          ansible-playbook -i ansible/inventory.ini ansible/setup.yml \
+            --extra-vars "mysql_root_password=${{ secrets.MYSQL_ROOT_PASSWORD }} \
+                         replication_password=${{ secrets.REPLICATION_PASSWORD }}"

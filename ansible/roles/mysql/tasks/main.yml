@@ -23,24 +23,26 @@
     state: started
     enabled: true
 
-#- name: Создание ~/.my.cnf с root-паролем
-#  copy:
-#    dest: /root/.my.cnf
-#    content: |
-#      [client]
-#      user=root
-#      password=examplepass  # Замените на ваш root-пароль
-#    mode: '0600'
+- name: Создание .my.cnf
+  copy:
+    dest: /root/.my.cnf
+    content: |
+      [client]
+      user=root
+      password={{ mysql_root_password }}
+    mode: '0600'
+  no_log: true  # Скрывает пароль в логах
 
 - name: Создание репликационного пользователя
   mysql_user:
     name: replicator
-    password: replication_password
+    password: "{{ replication_password }}"
     priv: '*.*:REPLICATION SLAVE'
     host: '%'
     state: present
-    login_user: replicator_user
-    login_password: replicator_password
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  no_log: true
 
 - name: Получение бинарного лога и позиции
   mysql_replication:
