@@ -1,6 +1,6 @@
 - name: Создаём директорию для конфигов реплики
   file:
-    path: /opt/wordpress/config
+    path: /opt/wordpress/config/replica
     state: directory
     mode: 0755
 
