@@ -46,7 +46,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
     command: >
-      - mysqld
       - --bind-address=0.0.0.0
       - --server-id=2
       - --relay_log=/var/log/mysql/mysql-relay-bin.log
