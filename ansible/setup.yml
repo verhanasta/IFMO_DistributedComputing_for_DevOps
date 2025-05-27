@@ -1,17 +1,17 @@
-- hosts: wordpress  # Укажите группу хостов из инвентарного файла
-  become: yes  # Если необходимо использовать sudo
+- hosts: wordpress
+  become: yes
   tasks:
     - name: Установка Docker
       apt:
         name: docker.io
         state: present
-      when: ansible_os_family == "Debian"  # Установка Docker для Debian/Ubuntu
+      when: ansible_os_family == "Debian"
 
     - name: Установка Docker Compose
       apt:
         name: docker-compose
         state: present
-      when: ansible_os_family == "Debian"  # Установка Docker Compose для Debian/Ubuntu
+      when: ansible_os_family == "Debian"
 
   roles:
     - common

@@ -1,9 +1,3 @@
-#- name: Разворачиваем конфиг реплики
-#  template:
-#    src: "roles/mysql_replica/templates/replica.cnf.j2"
-#    dest: "/opt/wordpress/config/replica.cnf"
-#    mode: 0644
-
 - name: Проверить состояние контейнера
   shell: |
     docker ps -a --filter name=mysql_master --format "{{ '{{.Status}}' }}"
