@@ -55,7 +55,6 @@ services:
       - --read_only=ON
     volumes:
       - mysql_replica_data:/var/lib/mysql
-      - ./config/replica.cnf:/etc/mysql/conf.d/replica.cnf
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
       interval: 5s
