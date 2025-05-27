@@ -3,6 +3,7 @@
     docker ps -a --filter name=mysql_master --format "{{ '{{.Status}}' }}"
   register: container_status
   failed_when: false
+  changed_when: false
 
 - name: Получить логи MySQL
   shell: docker logs mysql_master | tail -n 50

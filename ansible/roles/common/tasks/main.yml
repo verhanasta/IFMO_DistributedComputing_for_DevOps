@@ -1,22 +1,23 @@
 - name: Установка зависимостей
-  apt:
+  ansible.builtin.apt:
     name:
       - docker.io
       - docker-compose
       - python3-pymysql
     state: present
-    update_cache: yes
+    update_cache: true
+
 
 - name: Запуск Docker
-  service:
+  ansible.builtin.service:
     name: docker
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Создание рабочей директории
-  file:
+  ansible.builtin.file:
     path: /opt/wordpress
     state: directory
-    mode: 0755
+    mode: "0755"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"

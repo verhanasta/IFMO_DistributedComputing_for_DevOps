@@ -30,7 +30,7 @@
   until: mysql_ping.stdout.find('mysqld is alive') != -1
 
 - name: Настройка пользователя репликации
-  mysql_user:
+  community.mysql.mysql_user:
     login_host: 127.0.0.1
     login_port: 3306
     login_user: root
