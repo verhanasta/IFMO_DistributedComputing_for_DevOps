@@ -48,7 +48,7 @@ services:
     command:
       - --bind-address=0.0.0.0
       - --server-id=2
-      - --relay_log=/var/log/mysql/mysql-relay-bin.log
+      - --relay_log=mysql-relay-bin.log
       - --gtid_mode=ON
       - --enforce_gtid_consistency=ON
       - --log_slave_updates=ON
