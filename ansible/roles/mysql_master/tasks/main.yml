@@ -22,12 +22,12 @@
     chdir: /opt/wordpress
 
 - name: Ожидание готовности MySQL мастера
-  wait_for:
-    host: 127.0.0.1
-    port: 3306
-    delay: 5
-    timeout: 180
-    sleep: 5
+  shell: |
+    docker exec mysql_master mysqladmin ping -uroot -p{{ mysql_root_password }} --silent
+  register: mysql_ping
+  retries: 30
+  delay: 5
+  until: mysql_ping.stdout.find('mysqld is alive') != -1
 
 - name: Настройка пользователя репликации
   mysql_user:

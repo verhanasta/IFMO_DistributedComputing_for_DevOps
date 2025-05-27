@@ -45,6 +45,14 @@ services:
       - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+    command: >
+      --bind-address=0.0.0.0
+      --server-id=2
+      --relay_log=/var/log/mysql/mysql-relay-bin.log
+      --gtid_mode=ON
+      --enforce_gtid_consistency=ON
+      --log_slave_updates=ON
+      --read_only=ON
     volumes:
       - mysql_replica_data:/var/lib/mysql
       - ./config/replica.cnf:/etc/mysql/conf.d/replica.cnf

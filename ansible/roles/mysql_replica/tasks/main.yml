@@ -1,14 +1,8 @@
-- name: Создаём директорию для конфигов реплики
-  file:
-    path: /opt/wordpress/config/
-    state: directory
-    mode: 0755
-
-- name: Разворачиваем конфиг реплики
-  template:
-    src: "roles/mysql_replica/templates/replica.cnf.j2"
-    dest: "/opt/wordpress/config/replica.cnf"
-    mode: 0644
+#- name: Разворачиваем конфиг реплики
+#  template:
+#    src: "roles/mysql_replica/templates/replica.cnf.j2"
+#    dest: "/opt/wordpress/config/replica.cnf"
+#    mode: 0644
 
 - name: Проверить состояние контейнера
   shell: |
