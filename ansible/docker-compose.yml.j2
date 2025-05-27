@@ -47,7 +47,13 @@ services:
       MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
     volumes:
       - mysql_replica_data:/var/lib/mysql
-      - ./config/replica.cnf:/etc/mysql/conf.d/replica_config.cnf.cnf
+      - ./config/replica/replica.cnf:/etc/mysql/conf.d/replica_config.cnf
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
     networks:
       - wp_network
 
