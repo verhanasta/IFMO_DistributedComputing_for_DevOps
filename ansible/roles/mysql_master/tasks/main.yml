@@ -17,7 +17,7 @@
     mode: '0644'
 
 - name: Запуск контейнеров с Docker Compose
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     project_src: /opt/wordpress
     state: present
     # removed_orphans: yes
