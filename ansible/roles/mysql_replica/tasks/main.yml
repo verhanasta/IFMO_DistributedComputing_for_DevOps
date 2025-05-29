@@ -1,19 +1,21 @@
-- name: Проверить состояние контейнера
-  shell: |
-    docker ps -a --filter name=mysql_master --format "{{ '{{.Status}}' }}"
-  register: container_status
+- name: Проверить состояние контейнера mysql_master
+  community.docker.docker_container_info:
+    name: mysql_master
+  register: container_info
   failed_when: false
   changed_when: false
 
 - name: Получить логи MySQL
-  shell: docker logs mysql_master | tail -n 50
+  community.docker.docker_container_logs:
+    name: mysql_master
+    tail: 50
   register: mysql_logs
   failed_when: false
 
 - debug:
     msg: |
-      Статус контейнера: {{ container_status.stdout }}
-      Логи MySQL: {{ mysql_logs.stdout_lines }}
+      Статус контейнера: {{ container_info.container.State.Status }}
+      Логи MySQL: {{ mysql_logs.log_lines }}
 
 - name: Проверяем доступность мастера
   wait_for:
@@ -23,18 +25,22 @@
     timeout: 60
 
 - name: Настраиваем репликацию
-  command: |
-    docker exec mysql_replica mysql -uroot -p{{ mysql_root_password }} -e "
-    CHANGE MASTER TO
-    MASTER_HOST='mysql_master',
-    MASTER_USER='replicator',
-    MASTER_PASSWORD='{{ replication_password }}',
-    MASTER_AUTO_POSITION=1;
-    START SLAVE;"
+  community.docker.docker_container_exec:
+    container: mysql_replica
+    command: >
+      mysql -uroot -p{{ mysql_root_password }} -e "
+      CHANGE MASTER TO
+      MASTER_HOST='mysql_master',
+      MASTER_USER='replicator',
+      MASTER_PASSWORD='{{ replication_password }}',
+      MASTER_AUTO_POSITION=1;
+      START SLAVE;"
   register: replica_setup
   failed_when: "'ERROR' in replica_setup.stderr"
 
 - name: Проверяем статус репликации
-  command: docker exec mysql_replica mysql -uroot -p{{ mysql_root_password }} -e "SHOW SLAVE STATUS\G"
+  community.docker.docker_container_exec:
+    container: mysql_replica
+    command: mysql -uroot -p{{ mysql_root_password }} -e "SHOW SLAVE STATUS\G"
   register: replication_status
   changed_when: false
