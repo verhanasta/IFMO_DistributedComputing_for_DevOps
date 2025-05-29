@@ -17,7 +17,7 @@
     mode: '0644'
 
 - name: Запуск контейнеров
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     project_src: "{{ work_dir }}"
     state: present
   register: compose_output
