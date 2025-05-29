@@ -1,3 +1,6 @@
+- name: Debug installed collections
+  run: ansible-galaxy collection list
+
 - name: Установка зависимостей
   ansible.builtin.apt:
     name:
