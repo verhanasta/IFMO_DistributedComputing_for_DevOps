@@ -32,6 +32,12 @@ jobs:
       - name: Install Ansible
         run: sudo apt-get update && sudo apt-get install -y ansible
 
+      - name: Install community.docker collection
+        run: ansible-galaxy collection install community.docker
+
+      - name: Install community.mysql collection
+        run: ansible-galaxy collection install community.mysql
+
       - name: Run playbook
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/setup.yml \
