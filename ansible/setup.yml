@@ -1,19 +1,43 @@
-- hosts: wordpress
+- name: Deploy WordPress with MySQL Replication
+  hosts: wordpress
   become: yes
-  tasks:
-    - name: Установка Docker
-      apt:
-        name: docker.io
-        state: present
-      when: ansible_os_family == "Debian"
 
-    - name: Установка Docker Compose
-      apt:
-        name: docker-compose
+  tasks:
+    - name: Установка Docker, Python-pip и PyMySQL
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - python3-pip
+          - python3-pymysql
         state: present
-      when: ansible_os_family == "Debian"
+        update_cache: true
+
+    - name: Установка Python-библиотеки Docker для Ansible
+      ansible.builtin.pip:
+        name: docker
+        state: present
+
+    - name: Установка Docker Compose V2 (плагин) на целевом хосте
+      ansible.builtin.shell: |
+        curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+      args:
+        creates: /usr/local/bin/docker-compose
+
+    - name: Запуск Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true # Включаем автозапуск Docker при старте системы
+
+    - name: Создание рабочей директории
+      ansible.builtin.file:
+        path: /opt/wordpress
+        state: directory
+        mode: '0755'
+        owner: "{{ ansible_user }}" # Владельцем будет пользователь, под которым подключается Ansible
+        group: "{{ ansible_user }}"
 
   roles:
-    - common
     - mysql_master
     - mysql_replica
