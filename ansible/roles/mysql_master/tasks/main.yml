@@ -1,33 +1,35 @@
 - name: Создание директории конфигов
-  file:
+  ansible.builtin.file:
     path: /opt/wordpress/config
     state: directory
-    mode: 0755
+    mode: '0755'
 
 - name: Развертывание конфига мастера
-  template:
+  ansible.builtin.template:
     src: "roles/mysql_master/templates/master.cnf.j2"
     dest: "/opt/wordpress/config/master.cnf"
-    mode: 0644
+    mode: '0644'
 
 - name: Копирование docker-compose
-  template:
+  ansible.builtin.template:
     src: "docker-compose.yml.j2"
     dest: "/opt/wordpress/docker-compose.yml"
-    mode: 0644
+    mode: '0644'
 
-- name: Запуск контейнеров
-  command: docker-compose up -d
-  args:
-    chdir: /opt/wordpress
+- name: Запуск контейнеров с Docker Compose
+  community.docker.docker_compose:
+    project_src: /opt/wordpress
+    state: present
+    # removed_orphans: yes
+    # build: yes
 
-- name: Ожидание готовности MySQL мастера
-  shell: |
-    docker exec mysql_master mysqladmin ping -uroot -p{{ mysql_root_password }} --silent
-  register: mysql_ping
-  retries: 30
-  delay: 5
-  until: mysql_ping.stdout.find('mysqld is alive') != -1
+- name: Ожидание готовности MySQL мастера (через порт)
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 3306
+    timeout: 300
+    state: started
+    delay: 5
 
 - name: Настройка пользователя репликации
   community.mysql.mysql_user:

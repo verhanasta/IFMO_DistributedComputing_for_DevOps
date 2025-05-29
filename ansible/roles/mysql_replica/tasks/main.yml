@@ -1,40 +1,52 @@
-- name: Проверить состояние контейнера
-  shell: |
-    docker ps -a --filter name=mysql_master --format "{{ '{{.Status}}' }}"
-  register: container_status
-  failed_when: false
-  changed_when: false
+- name: Получить информацию о контейнере mysql_master
+  community.docker.docker_container_info:
+    name: mysql_master
+  register: master_container_info
 
-- name: Получить логи MySQL
-  shell: docker logs mysql_master | tail -n 50
-  register: mysql_logs
-  failed_when: false
+- name: Получить информацию о контейнере mysql_replica
+  community.docker.docker_container_info:
+    name: mysql_replica
+  register: replica_container_info
 
-- debug:
+- name: Вывести статус контейнеров (для отладки)
+  debug:
     msg: |
-      Статус контейнера: {{ container_status.stdout }}
-      Логи MySQL: {{ mysql_logs.stdout_lines }}
+      Статус контейнера mysql_master: {{ master_container_info.container.state.status | default('не найден или не запущен') }}
+      Статус контейнера mysql_replica: {{ replica_container_info.container.state.status | default('не найден или не запущен') }}
 
-- name: Проверяем доступность мастера
-  wait_for:
+- name: Ожидаем доступности порта MySQL на мастере (3306)
+  ansible.builtin.wait_for:
     host: 127.0.0.1
     port: 3306
     delay: 10
     timeout: 60
+    state: started
 
-- name: Настраиваем репликацию
-  command: |
-    docker exec mysql_replica mysql -uroot -p{{ mysql_root_password }} -e "
-    CHANGE MASTER TO
-    MASTER_HOST='mysql_master',
-    MASTER_USER='replicator',
-    MASTER_PASSWORD='{{ replication_password }}',
-    MASTER_AUTO_POSITION=1;
-    START SLAVE;"
-  register: replica_setup
-  failed_when: "'ERROR' in replica_setup.stderr"
+- name: Настраиваем репликацию на реплике MySQL
+  community.mysql.mysql_replication:
+    login_host: mysql_replica
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    master_host: mysql_master
+    master_user: replicator
+    master_password: "{{ replication_password }}"
+    master_auto_position: true
+    state: start_slave
+  register: replication_setup_result
 
-- name: Проверяем статус репликации
-  command: docker exec mysql_replica mysql -uroot -p{{ mysql_root_password }} -e "SHOW SLAVE STATUS\G"
-  register: replication_status
-  changed_when: false
+- name: Проверяем статус настройки репликации
+  debug:
+    var: replication_setup_result
+
+- name: Проверяем статус репликации MySQL
+  community.mysql.mysql_query: # Используем специализированный модуль для выполнения SQL-запросов
+    login_host: mysql_replica
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    query: "SHOW SLAVE STATUS\\G"
+  register: replication_status_check
+  changed_when: false # Выполнение запроса не изменяет состояние системы
+
+- name: Выводим статус репликации
+  debug:
+    var: replication_status_check.query_result
