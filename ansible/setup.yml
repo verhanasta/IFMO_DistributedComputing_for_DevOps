@@ -1,4 +1,6 @@
 - hosts: wordpress
+  collections:
+    - community.docker
   become: yes
   tasks:
     - name: Установка Docker
