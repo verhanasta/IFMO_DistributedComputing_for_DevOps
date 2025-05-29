@@ -1,18 +1,5 @@
 - hosts: wordpress
   become: yes
-  tasks:
-    - name: Установка Docker
-      apt:
-        name: docker.io
-        state: present
-      when: ansible_os_family == "Debian"
-
-    - name: Установка Docker Compose
-      apt:
-        name: docker-compose
-        state: present
-      when: ansible_os_family == "Debian"
-
   roles:
     - common
     - mysql_master
