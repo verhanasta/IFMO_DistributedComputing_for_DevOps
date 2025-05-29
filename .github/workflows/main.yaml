@@ -29,11 +29,6 @@ jobs:
           echo "[wordpress]" > ansible/inventory.ini
           echo "${{ secrets.SSH_HOST }} ansible_user=${{ secrets.SSH_USER }} ansible_ssh_private_key_file=~/.ssh/deploy_key" >> ansible/inventory.ini
 
-      - name: Install Docker.io
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
-
       - name: Install Docker Compose V2 Plugin
         run: |
           DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
