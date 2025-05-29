@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANSIBLE_HOST_KEY_CHECKING: "False"
-      ANSIBLE_COLLECTIONS_PATHS: ~/.ansible/collections:/usr/share/ansible/collections
+      ANSIBLE_COLLECTIONS_PATH: ~/.ansible/collections:/usr/share/ansible/collections
 
     steps:
       - name: Checkout code
@@ -39,6 +39,9 @@ jobs:
       - name: Install Ansible Galaxy collections
         run: |
           ansible-galaxy collection install community.docker
+
+      - name: Debug installed collections
+        run: ansible-galaxy collection list
 
       - name: Run playbook
         run: |
