@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANSIBLE_HOST_KEY_CHECKING: "False"
-      ANSIBLE_COLLECTIONS_PATH: /home/runner/.ansible/collections:/usr/share/ansible/collections
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,17 +28,22 @@ jobs:
           echo "[wordpress]" > ansible/inventory.ini
           echo "${{ secrets.SSH_HOST }} ansible_user=${{ secrets.SSH_USER }} ansible_ssh_private_key_file=~/.ssh/deploy_key" >> ansible/inventory.ini
 
-      - name: Install Ansible and Python dependencies
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible and core Python dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ansible python3-pip
-          pip install docker
+          pip install ansible
+          pip install docker docker-compose PyMySQL
 
       - name: Install Ansible Galaxy collections
         run: |
-          ansible-galaxy collection install community.docker
+          ansible-galaxy collection install community.docker --force
+          ansible-galaxy collection install community.mysql --force
 
-      - name: Debug installed collections
+      - name: Debug installed collections (Критично для диагностики!)
         run: ansible-galaxy collection list
 
       - name: Run playbook
