@@ -33,10 +33,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Ansible and core Python dependencies
+      - name: Install Ansible and Python dependencies
         run: |
           pip install ansible
-          pip install docker docker-compose PyMySQL
+          pip install docker PyMySQL
 
       - name: Install Ansible Galaxy collections
         run: |
