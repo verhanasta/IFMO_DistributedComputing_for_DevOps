@@ -29,25 +29,8 @@ jobs:
           echo "[wordpress]" > ansible/inventory.ini
           echo "${{ secrets.SSH_HOST }} ansible_user=${{ secrets.SSH_USER }} ansible_ssh_private_key_file=~/.ssh/deploy_key" >> ansible/inventory.ini
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
       - name: Install Ansible
-        run: pip install ansible
-
-      - name: Show Ansible Version (Диагностика)
-        run: ansible --version
-
-      - name: Install community.docker collection
-        run: ansible-galaxy collection install community.docker --force
-
-      - name: Install community.mysql collection
-        run: ansible-galaxy collection install community.mysql --force
-
-      - name: List Installed Collections (Диагностика)
-        run: ansible-galaxy collection list
+        run: sudo apt-get update && sudo apt-get install -y ansible
 
       - name: Run playbook
         run: |

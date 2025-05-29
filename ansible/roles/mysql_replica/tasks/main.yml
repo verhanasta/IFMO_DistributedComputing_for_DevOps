@@ -1,43 +1,40 @@
-- name: Ожидание готовности MySQL мастера
-  ansible.builtin.include_tasks:
-    file: wait_for_healthy_container.yml
-  vars:
-    container_name_to_wait: mysql_master
-    container_port_to_wait: 3306
+- name: Проверить состояние контейнера
+  shell: |
+    docker ps -a --filter name=mysql_master --format "{{ '{{.Status}}' }}"
+  register: container_status
+  failed_when: false
+  changed_when: false
 
 - name: Получить логи MySQL
-  community.docker.docker_container_logs:
-    name: mysql_master
-    tail: 50
-  register: mysql_logs_info
+  shell: docker logs mysql_master | tail -n 50
+  register: mysql_logs
   failed_when: false
 
+- debug:
+    msg: |
+      Статус контейнера: {{ container_status.stdout }}
+      Логи MySQL: {{ mysql_logs.stdout_lines }}
+
 - name: Проверяем доступность мастера
-  ansible.builtin.wait_for:
+  wait_for:
     host: 127.0.0.1
     port: 3306
     delay: 10
     timeout: 60
 
 - name: Настраиваем репликацию
-  community.mysql.mysql_replication:
-    login_host: 127.0.0.1
-    login_port: 3307
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-    master_host: mysql_master
-    master_port: 3306
-    master_user: "{{ replication_user }}"
-    master_password: "{{ replication_password }}"
-    master_auto_position: yes
-    state: start_slave
+  command: |
+    docker exec mysql_replica mysql -uroot -p{{ mysql_root_password }} -e "
+    CHANGE MASTER TO
+    MASTER_HOST='mysql_master',
+    MASTER_USER='replicator',
+    MASTER_PASSWORD='{{ replication_password }}',
+    MASTER_AUTO_POSITION=1;
+    START SLAVE;"
+  register: replica_setup
+  failed_when: "'ERROR' in replica_setup.stderr"
 
 - name: Проверяем статус репликации
-  community.mysql.mysql_replication:
-    login_host: 127.0.0.1
-    login_port: 3307
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-    state: get_slave_status
+  command: docker exec mysql_replica mysql -uroot -p{{ mysql_root_password }} -e "SHOW SLAVE STATUS\G"
   register: replication_status
   changed_when: false

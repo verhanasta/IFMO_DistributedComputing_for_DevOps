@@ -1,43 +1,13 @@
-- name: Установка python3-pip (если еще не установлен)
+- name: Установка зависимостей
   ansible.builtin.apt:
-    name: python3-pip
+    name:
+      - docker.io
+      - docker-compose
+      - python3-pymysql
     state: present
     update_cache: true
-  when: ansible_os_family == "Debian"
 
-- name: Установка Python-зависимостей для Docker и MySQL
-  ansible.builtin.pip:
-    name:
-      - docker
-      - docker-compose
-      - PyMySQL
-    state: present
-
-- name: Установка Docker CE и Docker Compose Plugin (рекомендуемый способ)
-  ansible.builtin.shell: |
-    sudo apt-get update
-    sudo apt-get install -y ca-certificates curl gnupg
-    sudo install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-    sudo chmod a+r /etc/apt/keyrings/docker.gpg
-    echo \
-      "deb [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-      \"$(. /etc/os-release && echo \"$VERSION_CODENAME\")\" stable" | \
-      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-    sudo apt-get update
-    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-  args:
-    creates: /usr/bin/docker
-  when: ansible_os_family == "Debian"
-
-- name: Добавление текущего пользователя в группу docker
-  ansible.builtin.user:
-    name: "{{ ansible_user }}"
-    groups: docker
-    append: yes
-  when: ansible_os_family == "Debian"
-
-- name: Запуск сервиса Docker
+- name: Запуск Docker
   ansible.builtin.service:
     name: docker
     state: started
@@ -48,5 +18,5 @@
     path: /opt/wordpress
     state: directory
     mode: "0755"
-    owner: "{{ ansible_user }}" # Устанавливаем владельцем пользователя, от имени которого работает Ansible
-    group: "{{ ansible_user }}" # Устанавливаем группу пользователя Ansible
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
