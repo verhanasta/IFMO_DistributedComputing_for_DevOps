@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANSIBLE_HOST_KEY_CHECKING: "False"
-      ANSIBLE_COLLECTIONS_PATH: ~/.ansible/collections:/usr/share/ansible/collections
+      ANSIBLE_COLLECTIONS_PATH: /home/runner/.ansible/collections:/usr/share/ansible/collections
 
     steps:
       - name: Checkout code
