@@ -1,8 +1,9 @@
-- name: Установка зависимостей
+- name: Установка Docker и Python-зависимостей
   ansible.builtin.apt:
     name:
       - docker.io
-      - docker-compose
+      - docker-compose-plugin
+      - python3-pip
       - python3-pymysql
     state: present
     update_cache: true
