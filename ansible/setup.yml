@@ -50,6 +50,11 @@
         state: present
       ignore_errors: yes
 
+    - name: Установить PyMySQL
+      ansible.builtin.pip:
+        name: PyMySQL
+        executable: pip3
+
 - name: Развёртывание MySQL Master и Replica
   hosts: wordpress
   become: yes
