@@ -50,10 +50,10 @@
         state: present
       ignore_errors: yes
 
-    - name: Установить PyMySQL
-      ansible.builtin.pip:
-        name: PyMySQL
-        executable: pip3
+    - name: Установить библиотеку PyMySQL через apt
+      ansible.builtin.apt:
+        name: python3-pymysql
+        state: present
 
 - name: Развёртывание MySQL Master и Replica
   hosts: wordpress
