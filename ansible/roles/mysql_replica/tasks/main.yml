@@ -26,14 +26,14 @@
 
 - name: Настраиваем репликацию на реплике MySQL
   community.mysql.mysql_replication:
-    login_host: 127.0.0.1  # или IP контейнера mysql_replica
+    login_host: 127.0.0.1
     login_user: root
     login_password: "{{ mysql_root_password }}"
-    master_host: mysql_master
-    master_user: replicator
-    master_password: "{{ replication_password }}"
-    master_auto_position: true
-    state: start_slave
+    primary_host: mysql_master
+    primary_user: replicator
+    primary_password: "{{ replication_password }}"
+    primary_use_gtid: true
+    mode: start
   register: replication_setup_result
   become: yes
 
