@@ -36,6 +36,20 @@
         mode: '0755'
         force: no
 
+    - name: Запустить Docker сервис
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Проверить доступ к Docker сокету
+      ansible.builtin.command: docker version
+      register: docker_version
+      changed_when: false
+
+    - debug:
+        var: docker_version.stdout
+
     - name: Запуск Docker
       ansible.builtin.service:
         name: docker
