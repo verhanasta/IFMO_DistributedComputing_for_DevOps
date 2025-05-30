@@ -26,27 +26,16 @@
         dest: /usr/share/keyrings/docker-archive-keyring.gpg
         mode: '0644'
 
+    - name: Удалить старый источник Docker (если существует)
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d/docker.list
+        state: absent
+
     - name: Добавить Docker репозиторий
       ansible.builtin.apt_repository:
         repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename | lower }} stable"
         state: present
         filename: docker
-
-    - name: Установка Docker CE и зависимостей
-      ansible.builtin.apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - python3-pip
-          - python3-pymysql
-        state: latest
-        update_cache: true
-
-    - name: Установка Python-библиотеки Docker для Ansible
-      ansible.builtin.pip:
-        name: docker
-        state: present
 
     - name: Создать директорию для Docker CLI plugins
       ansible.builtin.file:
