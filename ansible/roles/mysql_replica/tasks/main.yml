@@ -27,6 +27,7 @@
 - name: Настраиваем репликацию на реплике MySQL
   community.mysql.mysql_replication:
     login_host: 127.0.0.1
+    login_port: 3307
     login_user: root
     login_password: "{{ mysql_root_password }}"
     primary_host: mysql_master
@@ -44,9 +45,10 @@
 - name: Проверяем статус репликации MySQL
   community.mysql.mysql_query:
     login_host: 127.0.0.1  # или IP контейнера mysql_replica
+    login_port: 3307
     login_user: root
     login_password: "{{ mysql_root_password }}"
-    query: "SHOW SLAVE STATUS\\G"
+    query: "SHOW SLAVE STATUS"
   register: replication_status_check
   changed_when: false
   become: yes
