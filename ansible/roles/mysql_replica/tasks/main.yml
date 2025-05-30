@@ -10,12 +10,6 @@
   register: replica_container_info
   become: yes
 
-- name: Вывести статус контейнеров (для отладки)
-  debug:
-    msg: |
-      Статус контейнера mysql_master: {{ master_container_info.container.state.status | default('не найден или не запущен') }}
-      Статус контейнера mysql_replica: {{ replica_container_info.container.state.status | default('не найден или не запущен') }}
-
 - name: Ожидаем доступности порта MySQL на мастере (3306)
   ansible.builtin.wait_for:
     host: 127.0.0.1
@@ -30,7 +24,8 @@
     login_port: 3307
     login_user: root
     login_password: "{{ mysql_root_password }}"
-    primary_host: mysql_master
+    primary_host: 127.0.0.1
+    primary_port: 3306
     primary_user: replicator
     primary_password: "{{ replication_password }}"
     primary_use_gtid: current_pos
@@ -44,15 +39,18 @@
 
 - name: Проверяем статус репликации MySQL
   community.mysql.mysql_query:
-    login_host: 127.0.0.1  # или IP контейнера mysql_replica
+    login_host: 127.0.0.1
     login_port: 3307
     login_user: root
     login_password: "{{ mysql_root_password }}"
-    query: "SHOW SLAVE STATUS"
+    query: "SHOW REPLICA STATUS"
   register: replication_status_check
   changed_when: false
   become: yes
 
-- name: Выводим статус репликации
+- name: Выводим ключевые поля репликации
   debug:
-    var: replication_status_check.query_result
+    msg: |
+      Replica_IO_Running: {{ replication_status_check.query_result[0].Replica_IO_Running }}
+      Replica_SQL_Running: {{ replication_status_check.query_result[0].Replica_SQL_Running }}
+      Seconds_Behind_Master: {{ replication_status_check.query_result[0].Seconds_Behind_Master }}
