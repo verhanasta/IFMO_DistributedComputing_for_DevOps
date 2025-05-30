@@ -43,7 +43,7 @@
     login_port: 3307
     login_user: root
     login_password: "{{ mysql_root_password }}"
-    query: "SHOW REPLICA STATUS"
+    query: "SHOW SLAVE STATUS"
   register: replication_status_check
   changed_when: false
   become: yes
