@@ -38,9 +38,11 @@ jobs:
          driver-opts: |
            image=moby/buildkit:buildx-stable-1
 
-
       - name: Install Ansible
-        run: sudo apt-get update && sudo apt-get install -y ansible python3-pip
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install ansible ansible-core
+
       - name: Install Ansible Collections
         run: |
           ansible-galaxy collection install community.docker

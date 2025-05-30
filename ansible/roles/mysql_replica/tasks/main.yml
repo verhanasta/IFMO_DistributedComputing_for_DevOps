@@ -16,7 +16,7 @@
 
 - name: Ожидаем доступности порта MySQL на мастере (3306)
   ansible.builtin.wait_for:
-    host: 127.0.0.1
+    host: 127.0.0.1  # или master_container_info.container.NetworkSettings.IPAddress
     port: 3306
     delay: 10
     timeout: 60
@@ -24,7 +24,8 @@
 
 - name: Настраиваем репликацию на реплике MySQL
   community.mysql.mysql_replication:
-    login_host: mysql_replica
+    login_host: 127.0.0.1
+    login_port: 3307
     login_user: root
     login_password: "{{ mysql_root_password }}"
     master_host: mysql_master
@@ -39,13 +40,14 @@
     var: replication_setup_result
 
 - name: Проверяем статус репликации MySQL
-  community.mysql.mysql_query: # Используем специализированный модуль для выполнения SQL-запросов
-    login_host: mysql_replica
+  community.mysql.mysql_query:
+    login_host: 127.0.0.1
+    login_port: 3307
     login_user: root
     login_password: "{{ mysql_root_password }}"
     query: "SHOW SLAVE STATUS\\G"
   register: replication_status_check
-  changed_when: false # Выполнение запроса не изменяет состояние системы
+  changed_when: false
 
 - name: Выводим статус репликации
   debug:

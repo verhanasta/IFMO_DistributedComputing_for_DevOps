@@ -6,7 +6,7 @@
 
 - name: Развертывание конфига мастера
   ansible.builtin.template:
-    src: "roles/mysql_master/templates/master.cnf.j2"
+    src: "master.cnf.j2"
     dest: "/opt/wordpress/config/master.cnf"
     mode: '0644'
 
