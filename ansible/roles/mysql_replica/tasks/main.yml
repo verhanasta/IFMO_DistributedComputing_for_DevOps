@@ -33,7 +33,7 @@
     primary_user: replicator
     primary_password: "{{ replication_password }}"
     primary_use_gtid: true
-    mode: start
+    mode: startreplica
   register: replication_setup_result
   become: yes
 
