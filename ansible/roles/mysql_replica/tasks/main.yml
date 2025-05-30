@@ -32,7 +32,7 @@
     primary_host: mysql_master
     primary_user: replicator
     primary_password: "{{ replication_password }}"
-    primary_use_gtid: true
+    primary_use_gtid: current_pos
     mode: startreplica
   register: replication_setup_result
   become: yes
