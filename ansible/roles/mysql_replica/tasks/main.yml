@@ -2,11 +2,13 @@
   community.docker.docker_container_info:
     name: mysql_master
   register: master_container_info
+  become: yes
 
 - name: Получить информацию о контейнере mysql_replica
   community.docker.docker_container_info:
     name: mysql_replica
   register: replica_container_info
+  become: yes
 
 - name: Вывести статус контейнеров (для отладки)
   debug:
@@ -16,7 +18,7 @@
 
 - name: Ожидаем доступности порта MySQL на мастере (3306)
   ansible.builtin.wait_for:
-    host: 127.0.0.1  # или master_container_info.container.NetworkSettings.IPAddress
+    host: 127.0.0.1
     port: 3306
     delay: 10
     timeout: 60
@@ -24,8 +26,7 @@
 
 - name: Настраиваем репликацию на реплике MySQL
   community.mysql.mysql_replication:
-    login_host: 127.0.0.1
-    login_port: 3307
+    login_host: 127.0.0.1  # или IP контейнера mysql_replica
     login_user: root
     login_password: "{{ mysql_root_password }}"
     master_host: mysql_master
@@ -34,6 +35,7 @@
     master_auto_position: true
     state: start_slave
   register: replication_setup_result
+  become: yes
 
 - name: Проверяем статус настройки репликации
   debug:
@@ -41,13 +43,13 @@
 
 - name: Проверяем статус репликации MySQL
   community.mysql.mysql_query:
-    login_host: 127.0.0.1
-    login_port: 3307
+    login_host: 127.0.0.1  # или IP контейнера mysql_replica
     login_user: root
     login_password: "{{ mysql_root_password }}"
     query: "SHOW SLAVE STATUS\\G"
   register: replication_status_check
   changed_when: false
+  become: yes
 
 - name: Выводим статус репликации
   debug:
