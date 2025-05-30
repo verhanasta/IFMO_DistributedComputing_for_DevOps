@@ -1,7 +1,6 @@
 [mysqld]
 bind-address = 0.0.0.0
 server-id = 1  # Уникальный идентификатор сервера. Должен отличаться у каждого узла (мастер = 1, реплика = 2 и т.д.)
-binlog_do_db = {{ wp_db_name }}
 expire_logs_days = 7
 log_bin = /var/lib/mysql/mysql-bin
 binlog_format = ROW

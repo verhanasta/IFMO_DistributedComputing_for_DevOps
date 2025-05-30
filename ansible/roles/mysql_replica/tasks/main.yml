@@ -4,6 +4,19 @@
   register: master_container_info
   become: yes
 
+- name: Создать пользователя репликации на мастере MySQL
+  community.mysql.mysql_user:
+    login_host: 127.0.0.1
+    login_port: 3306
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    name: replicator
+    password: "{{ replication_password }}"
+    host: "%"
+    priv: "REPLICATION SLAVE ON *.*"
+    state: present
+  become: yes
+
 - name: Получить информацию о контейнере mysql_replica
   community.docker.docker_container_info:
     name: mysql_replica

@@ -48,11 +48,13 @@ services:
     command:
       - --bind-address=0.0.0.0
       - --server-id=2
+      - --log_bin=mysql-bin
       - --relay_log=mysql-relay-bin.log
       - --gtid_mode=ON
       - --enforce_gtid_consistency=ON
       - --log_slave_updates=ON
       - --read_only=ON
+      - --skip-slave-start=ON
     volumes:
       - mysql_replica_data:/var/lib/mysql
     healthcheck:
