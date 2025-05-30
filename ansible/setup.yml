@@ -9,13 +9,37 @@
         state: absent
       ignore_errors: true
 
-    - name: Установка Docker, Python-pip и PyMySQL
+    - name: Установка зависимостей для добавления Docker репозитория
       ansible.builtin.apt:
         name:
-          - docker.io
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+        update_cache: true
+
+    - name: Добавить официальный GPG ключ Docker
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Добавить Docker репозиторий
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+        state: present
+        filename: docker
+
+    - name: Установка Docker CE и зависимостей
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
           - python3-pip
           - python3-pymysql
-        state: present
+        state: latest
         update_cache: true
 
     - name: Установка Python-библиотеки Docker для Ansible
