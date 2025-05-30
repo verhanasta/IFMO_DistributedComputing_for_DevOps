@@ -1,96 +1,57 @@
-- name: Deploy WordPress with MySQL Replication
+- name: Развёртывание MySQL Master и Replica на одном хосте
   hosts: wordpress
   become: yes
 
   tasks:
-    - name: Удаление старого бинарника docker-compose (v1)
-      ansible.builtin.file:
-        path: /usr/bin/docker-compose
-        state: absent
-      ignore_errors: true
+    - name: Убедиться, что Docker и зависимости установлены
+      block:
+        - name: Обновить кеш apt
+          ansible.builtin.apt:
+            update_cache: yes
 
-    - name: Установка зависимостей для добавления Docker репозитория
-      ansible.builtin.apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - gnupg
-          - lsb-release
-        state: present
-        update_cache: true
+        - name: Установить зависимости для Docker
+          ansible.builtin.apt:
+            name:
+              - apt-transport-https
+              - ca-certificates
+              - curl
+              - software-properties-common
+            state: present
 
-    - name: Добавить официальный GPG ключ Docker
-      ansible.builtin.get_url:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        dest: /usr/share/keyrings/docker-archive-keyring.gpg
-        mode: '0644'
+        - name: Добавить GPG ключ Docker
+          ansible.builtin.apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
 
-    - name: Удалить конфликтующий файл docker.list (если существует)
-      ansible.builtin.file:
-        path: /etc/apt/sources.list.d/docker.list
-        state: absent
+        - name: Добавить репозиторий Docker
+          ansible.builtin.apt_repository:
+            repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+            state: present
 
-    - name: Добавить Docker репозиторий вручную
-      ansible.builtin.lineinfile:
-        path: /etc/apt/sources.list.d/docker.list
-        create: yes
-        line: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename | lower }} stable"
-        mode: '0644'
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
+        - name: Установить пакеты Docker
+          ansible.builtin.apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+            state: present
 
-    - name: Установка Docker CE и зависимостей
-      ansible.builtin.apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - python3-pip
-          - python3-pymysql
-        state: latest
-        update_cache: true
+        - name: Запустить и включить Docker
+          ansible.builtin.service:
+            name: docker
+            state: started
+            enabled: yes
 
-    - name: Установка Python-библиотеки Docker для Ansible
-      ansible.builtin.pip:
-        name: docker
-        state: present
+        - name: Установить python3-pip
+          ansible.builtin.apt:
+            name: python3-pip
+            state: present
 
-    - name: Создать директорию для Docker CLI plugins
-      ansible.builtin.file:
-        path: /usr/libexec/docker/cli-plugins
-        state: directory
-        mode: '0755'
-
-    - name: Скачать Docker Compose V2 плагин
-      ansible.builtin.get_url:
-        url: https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64
-        dest: /usr/libexec/docker/cli-plugins/docker-compose
-        mode: '0755'
-        force: no
-
-    - name: Запустить Docker сервис
-      ansible.builtin.service:
-        name: docker
-        state: started
-        enabled: yes
-
-    - name: Проверить доступ к Docker сокету
-      ansible.builtin.command: docker version
-      register: docker_version
-      changed_when: false
-
-    - name: Показать информацию о версии Docker
-      debug:
-        var: docker_version.stdout
-
-    - name: Создание рабочей директории
-      ansible.builtin.file:
-        path: /opt/wordpress
-        state: directory
-        mode: '0755'
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
+        - name: Установить docker-compose-plugin
+          ansible.builtin.apt:
+            name: docker-compose-plugin
+            state: present
+          ignore_errors: yes
 
   roles:
     - mysql_master
