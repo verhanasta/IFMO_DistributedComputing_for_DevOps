@@ -1,44 +1,43 @@
+- name: Запустить и включить Docker сервис
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Проверить версию Docker клиента и демона
+  ansible.builtin.command: docker version
+  register: docker_version
+  changed_when: false
+  become: yes
+
+- name: Вывести информацию о Docker версии
+  debug:
+    var: docker_version.stdout
+
 - name: Создание директории конфигов
   ansible.builtin.file:
     path: /opt/wordpress/config
     state: directory
     mode: '0755'
+  become: yes
 
 - name: Развертывание конфига мастера
   ansible.builtin.template:
-    src: "master.cnf.j2"
+    src: "roles/mysql_master/templates/master.cnf.j2"
     dest: "/opt/wordpress/config/master.cnf"
     mode: '0644'
+  become: yes
 
 - name: Копирование docker-compose
   ansible.builtin.template:
     src: "docker-compose.yml.j2"
     dest: "/opt/wordpress/docker-compose.yml"
     mode: '0644'
+  become: yes
 
 - name: Запуск контейнеров с Docker Compose
   community.docker.docker_compose_v2:
     project_src: /opt/wordpress
     state: present
-    # removed_orphans: yes
-    # build: yes
-
-- name: Ожидание готовности MySQL мастера (через порт)
-  ansible.builtin.wait_for:
-    host: 127.0.0.1
-    port: 3306
-    timeout: 300
-    state: started
-    delay: 5
-
-- name: Настройка пользователя репликации
-  community.mysql.mysql_user:
-    login_host: 127.0.0.1
-    login_port: 3306
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
-    name: replicator
-    host: '%'
-    password: "{{ replication_password }}"
-    priv: '*.*:REPLICATION SLAVE'
-    state: present
+  become: yes
