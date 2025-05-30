@@ -1,58 +1,58 @@
-- name: Развёртывание MySQL Master и Replica на одном хосте
+- name: Установка Docker и подготовка хоста
   hosts: wordpress
   become: yes
-
   tasks:
-    - name: Убедиться, что Docker и зависимости установлены
-      block:
-        - name: Обновить кеш apt
-          ansible.builtin.apt:
-            update_cache: yes
+    - name: Обновить кеш apt
+      ansible.builtin.apt:
+        update_cache: yes
 
-        - name: Установить зависимости для Docker
-          ansible.builtin.apt:
-            name:
-              - apt-transport-https
-              - ca-certificates
-              - curl
-              - software-properties-common
-            state: present
+    - name: Установить зависимости для Docker
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
 
-        - name: Добавить GPG ключ Docker
-          ansible.builtin.apt_key:
-            url: https://download.docker.com/linux/ubuntu/gpg
-            state: present
+    - name: Добавить GPG ключ Docker
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
 
-        - name: Добавить репозиторий Docker
-          ansible.builtin.apt_repository:
-            repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
-            state: present
+    - name: Добавить репозиторий Docker
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
 
-        - name: Установить пакеты Docker
-          ansible.builtin.apt:
-            name:
-              - docker-ce
-              - docker-ce-cli
-              - containerd.io
-            state: present
+    - name: Установить Docker пакеты
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
 
-        - name: Запустить и включить Docker
-          ansible.builtin.service:
-            name: docker
-            state: started
-            enabled: yes
+    - name: Запустить и включить Docker сервис
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
 
-        - name: Установить python3-pip
-          ansible.builtin.apt:
-            name: python3-pip
-            state: present
+    - name: Установить python3-pip (для Ansible Docker модулей)
+      ansible.builtin.apt:
+        name: python3-pip
+        state: present
 
-        - name: Установить docker-compose-plugin
-          ansible.builtin.apt:
-            name: docker-compose-plugin
-            state: present
-          ignore_errors: yes
+    - name: Установить docker-compose-plugin
+      ansible.builtin.apt:
+        name: docker-compose-plugin
+        state: present
+      ignore_errors: yes
 
+- name: Развёртывание MySQL Master и Replica
+  hosts: wordpress
+  become: yes
   roles:
     - mysql_master
     - mysql_replica
