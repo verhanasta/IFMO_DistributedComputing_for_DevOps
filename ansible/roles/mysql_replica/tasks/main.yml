@@ -62,7 +62,7 @@
     primary_port: 3306
     primary_user: replicator
     primary_password: "{{ replication_password }}"
-    primary_use_gtid: true
+    primary_use_gtid: current_pos
     mode: startreplica
   register: replica_setup
   become: true
