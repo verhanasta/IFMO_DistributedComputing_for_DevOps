@@ -1,0 +1,29 @@
+- name: Создание директории для файлов мониторинга
+  ansible.builtin.file:
+    path: /opt/monitoring
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Копирование файла конфигурации Prometheus
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /opt/monitoring/prometheus.yml
+    mode: '0644'
+
+- name: Копирование docker-compose.yml для мониторинга
+  ansible.builtin.template:
+    src: docker-compose-monitoring.yml.j2
+    dest: /opt/monitoring/docker-compose.yml
+    mode: '0644'
+
+- name: Запуск контейнеров мониторинга с Docker Compose V2
+  community.docker.docker_compose_v2:
+    project_src: /opt/monitoring
+    state: present
+  register: monitoring_compose_result
+
+- name: Проверка запуска контейнеров мониторинга
+  debug:
+    var: monitoring_compose_result

@@ -61,3 +61,4 @@
   roles:
     - mysql_master
     - mysql_replica
+    - monitoring
