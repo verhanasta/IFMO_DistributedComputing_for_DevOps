@@ -4,6 +4,13 @@
   register: master_container_info
   become: yes
 
+- name: Ждать пока MySQL мастер будет доступен
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 3306
+    timeout: 60
+    state: started
+
 - name: Создать пользователя репликации на мастере MySQL
   community.mysql.mysql_user:
     login_host: 127.0.0.1
