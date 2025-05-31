@@ -11,16 +11,16 @@
     timeout: 60
     state: started
 
-- name: Создать пользователя репликации на мастере MySQL через SQL-запросы
+- name: Создать пользователя репликации и выдать права на мастере MySQL
   community.mysql.mysql_query:
     login_host: 127.0.0.1
     login_port: 3306
     login_user: root
     login_password: "{{ mysql_root_password }}"
-    queries:
-      - "CREATE USER IF NOT EXISTS 'replicator'@'%' IDENTIFIED BY '{{ replication_password }}';"
-      - "GRANT REPLICATION SLAVE ON *.* TO 'replicator'@'%';"
-      - "FLUSH PRIVILEGES;"
+    query: >
+      CREATE USER IF NOT EXISTS 'replicator'@'%' IDENTIFIED BY '{{ replication_password }}';
+      GRANT REPLICATION SLAVE ON *.* TO 'replicator'@'%';
+      FLUSH PRIVILEGES;
   become: yes
 
 - name: Получить информацию о контейнере mysql_replica
