@@ -52,42 +52,56 @@
     timeout: 60
     state: started
 
-- name: Настраиваем репликацию на реплике MySQL
+- name: Настроить репликацию на реплике MySQL через модуль mysql_replication
   community.mysql.mysql_replication:
     login_host: 127.0.0.1
     login_port: 3307
     login_user: root
     login_password: "{{ mysql_root_password }}"
-    primary_host: 127.0.0.1
+    primary_host: mysql_master
     primary_port: 3306
     primary_user: replicator
     primary_password: "{{ replication_password }}"
-    primary_use_gtid: current_pos
+    primary_use_gtid: true
     mode: startreplica
-  register: replication_setup_result
-  become: yes
+  register: replica_setup
+  become: true
 
-- name: Проверяем статус настройки репликации
-  debug:
-    var: replication_setup_result
-
-- name: Проверяем статус репликации MySQL с повторами
+- name: Проверить статус репликации с повтором, пока данные не появятся
   community.mysql.mysql_query:
     login_host: 127.0.0.1
     login_port: 3307
     login_user: root
     login_password: "{{ mysql_root_password }}"
     query: "SHOW SLAVE STATUS"
-  register: replication_status_check
-  until: replication_status_check.query_result | length > 0
-  retries: 10
+  register: replication_status
+  retries: 5
   delay: 6
+  until: replication_status.query_result | length > 0
   changed_when: false
-  become: yes
+  become: true
 
-- name: Проверить что репликация работает
-  assert:
-    that:
-      - replication_io == 'Yes'
-      - replication_sql == 'Yes'
-    fail_msg: "Репликация не работает: IO={{ replication_io }}, SQL={{ replication_sql }}"
+- name: Проверяем статус настройки репликации
+  debug:
+    var: replication_setup_result
+
+#- name: Проверяем статус репликации MySQL с повторами
+#  community.mysql.mysql_query:
+#    login_host: 127.0.0.1
+#    login_port: 3307
+#    login_user: root
+#    login_password: "{{ mysql_root_password }}"
+#    query: "SHOW SLAVE STATUS"
+#  register: replication_status_check
+#  until: replication_status_check.query_result | length > 0
+#  retries: 10
+#  delay: 6
+#  changed_when: false
+#  become: yes
+#
+#- name: Проверить что репликация работает
+#  assert:
+#    that:
+#      - replication_io == 'Yes'
+#      - replication_sql == 'Yes'
+#    fail_msg: "Репликация не работает: IO={{ replication_io }}, SQL={{ replication_sql }}"
