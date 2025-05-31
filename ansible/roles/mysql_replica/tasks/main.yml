@@ -20,7 +20,8 @@
     name: replicator
     password: "{{ replication_password }}"
     host: "%"
-    priv: "REPLICATION SLAVE ON *.*"
+    priv:
+      - "REPLICATION SLAVE ON *.*"
     state: present
   become: yes
 
