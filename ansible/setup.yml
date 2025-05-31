@@ -55,6 +55,11 @@
         name: python3-pymysql
         state: present
 
+    - name: Убедиться, что Docker network 'wp_network' существует
+      community.docker.docker_network:
+        name: wp_network
+        state: present
+
 - name: Развёртывание MySQL Master и Replica
   hosts: wordpress
   become: yes
