@@ -85,16 +85,9 @@
   changed_when: false
   become: yes
 
-- name: Устанавливаем флаги репликации
-  set_fact:
-    replication_io: "{{ replication_status_check.query_result[0]['Slave_IO_Running'] | default('unknown') }}"
-    replication_sql: "{{ replication_status_check.query_result[0]['Slave_SQL_Running'] | default('unknown') }}"
-    replication_lag: "{{ replication_status_check.query_result[0]['Seconds_Behind_Master'] | default('N/A') }}"
-
-- name: Выводим ключевые поля репликации
-  debug:
-    msg: |
-      Репликация IO: {{ replication_io }}
-      Репликация SQL: {{ replication_sql }}
-      Отставание (сек): {{ replication_lag }}
-
+- name: Проверить что репликация работает
+  assert:
+    that:
+      - replication_io == 'Yes'
+      - replication_sql == 'Yes'
+    fail_msg: "Репликация не работает: IO={{ replication_io }}, SQL={{ replication_sql }}"
