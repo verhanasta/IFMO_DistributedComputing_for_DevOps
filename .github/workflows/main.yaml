@@ -1,0 +1,58 @@
+name: Deploy WordPress with MySQL Replication
+
+on:
+  push:
+    branches:
+      - DZ2
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      ANSIBLE_HOST_KEY_CHECKING: "False"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh # Создаем директорию для SSH-ключей
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key # Записываем приватный ключ из секрета
+          chmod 600 ~/.ssh/deploy_key # Устанавливаем правильные права доступа
+          echo "Host *" > ~/.ssh/config # Настраиваем SSH-конфиг для подключения без StrictHostKeyChecking
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+
+      - name: Create inventory
+        run: |
+          echo "[wordpress]" > ansible/inventory.ini # Создаем файл инвентаря для Ansible
+          echo "${{ secrets.SSH_HOST }} ansible_user=${{ secrets.SSH_USER }} ansible_ssh_private_key_file=~/.ssh/deploy_key" >> ansible/inventory.ini
+
+      - name: Set up QEMU (for multi-arch builds, good practice)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx (includes Compose v2)
+        uses: docker/setup-buildx-action@v3
+        with:
+         driver-opts: |
+           image=moby/buildkit:buildx-stable-1
+
+      - name: Install Ansible
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install ansible ansible-core
+
+      - name: Install Ansible Collections
+        run: |
+          ansible-galaxy collection install community.docker
+          ansible-galaxy collection install community.mysql
+
+      - name: Run playbook
+        run: |
+          ansible-playbook -i ansible/inventory.ini ansible/setup.yml \
+            --extra-vars "mysql_root_password=${{ secrets.MYSQL_ROOT_PASSWORD }} \
+                         replication_password=${{ secrets.REPLICATION_PASSWORD }} \
+                         wp_db_user=${{ secrets.WP_DB_USER }} \
+                         wp_db_password=${{ secrets.WP_DB_PASSWORD }} \
+                         wp_db_name=${{ secrets.WP_DB_NAME }}"
