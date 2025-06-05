@@ -1,0 +1,102 @@
+- name: Развертывание конфига реплики (replica.cnf)
+  ansible.builtin.template:
+    src: "replica.cnf.j2"
+    dest: "/opt/wordpress/config/replica.cnf"
+    mode: '0644'
+  become: yes
+
+- name: Запуск MySQL Replica контейнера
+  community.docker.docker_container:
+    name: mysql_replica
+    image: mysql:5.7
+    env:
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+    command:
+      - --bind-address=0.0.0.0
+      - --server-id=2
+      - --log_bin=mysql-bin
+      - --relay_log=mysql-relay-bin.log
+      - --gtid_mode=ON
+      - --enforce_gtid_consistency=ON
+      - --log_slave_updates=ON
+      - --read_only=ON
+      - --skip-slave-start=ON
+    volumes:
+      - mysql_replica_data:/var/lib/mysql
+      - /opt/wordpress/config/replica.cnf:/etc/mysql/conf.d/config.cnf
+    networks:
+      - name: wp_network
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    state: started
+    restart_policy: unless-stopped
+  become: yes
+
+- name: Ожидание готовности MySQL Replica (через healthcheck)
+  community.docker.docker_container_info:
+    name: mysql_replica
+  register: mysql_replica_status
+  until: "mysql_replica_status.container.State.Running and mysql_replica_status.container.State.Health.Status == 'healthy'"
+  retries: 20
+  delay: 5
+  become: yes
+
+- name: Ожидание доступности MySQL Replica
+  community.mysql.mysql_info:
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_host: localhost
+    login_port: 3307
+  register: mysql_replica_reachable
+  until: mysql_replica_reachable is success
+  retries: 30
+  delay: 10
+  become: yes
+
+- name: Настройка репликации на Replica (CHANGE MASTER TO с mysql_replication)
+  community.mysql.mysql_replication:
+    mode: changeprimary
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_host: localhost
+    login_port: 3307
+    primary_host: 'mysql_master'
+    primary_user: 'replicator'
+    primary_password: "{{ replication_password }}"
+    primary_port: 3306
+    primary_log_file: "{{ hostvars[inventory_hostname]['master_log_file'] }}"
+    primary_log_pos: "{{ hostvars[inventory_hostname]['master_log_pos'] }}"
+  become: yes
+
+- name: Запуск репликации на Replica (START SLAVE с mysql_replication)
+  community.mysql.mysql_replication:
+    mode: startreplica
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_host: localhost
+    login_port: 3307
+  become: yes
+
+- name: Проверка статуса репликации на Replica (GET REPLICA с mysql_replication)
+  community.mysql.mysql_replication:
+    mode: getreplica
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_host: localhost
+    login_port: 3307
+  register: slave_status
+  until: "slave_status.Slave_IO_Running == 'Yes' and slave_status.Slave_SQL_Running == 'Yes'"
+  retries: 30
+  delay: 5
+  failed_when: "slave_status.Last_SQL_Error is defined and slave_status.Last_SQL_Error != ''"
+  become: yes
+
+- name: Вывести ошибку репликации, если она есть
+  debug:
+    var: slave_status.Last_SQL_Error
+  when: "slave_status.Last_SQL_Error is defined and slave_status.Last_SQL_Error != ''"
