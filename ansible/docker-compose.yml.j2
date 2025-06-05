@@ -1,0 +1,80 @@
+services:
+  mysql_master:
+    image: mysql:5.7
+    container_name: mysql_master
+    environment:
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+      MYSQL_DATABASE: "{{ wp_db_name }}"
+      MYSQL_USER: "{{ wp_db_user }}"
+      MYSQL_PASSWORD: "{{ wp_db_password }}"
+    volumes:
+      - mysql_master_data:/var/lib/mysql
+      - ./config/master.cnf:/etc/mysql/conf.d/config.cnf
+    networks:
+      - wp_network
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  mysql_replica:
+    image: mysql:5.7
+    container_name: mysql_replica
+    environment:
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+    command:
+      - --bind-address=0.0.0.0
+      - --server-id=2
+      - --log_bin=mysql-bin
+      - --relay_log=mysql-relay-bin.log
+      - --gtid_mode=ON
+      - --enforce_gtid_consistency=ON
+      - --log_slave_updates=ON
+      - --read_only=ON
+      - --skip-slave-start=ON
+    volumes:
+      - mysql_replica_data:/var/lib/mysql
+      - ./config/replica.cnf:/etc/mysql/conf.d/config.cnf
+    networks:
+      - wp_network
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      mysql_master:
+        condition: service_healthy
+    restart: unless-stopped
+
+  wordpress:
+    image: wordpress:6.4
+    container_name: wp_app
+    ports:
+      - "80:80"
+    volumes:
+      - wordpress_data:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: mysql_master
+      WORDPRESS_DB_USER: "{{ wp_db_user }}"
+      WORDPRESS_DB_PASSWORD: "{{ wp_db_password }}"
+      WORDPRESS_DB_NAME: "{{ wp_db_name }}"
+    networks:
+      - wp_network
+    depends_on:
+      mysql_master:
+        condition: service_healthy
+
+volumes:
+  wordpress_data:
+  mysql_master_data:
+  mysql_replica_data:
+
+networks:
+  wp_network:

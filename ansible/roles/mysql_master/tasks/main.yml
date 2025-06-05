@@ -1,0 +1,69 @@
+- name: Развертывание конфига мастера (master.cnf)
+  ansible.builtin.template:
+    src: "master.cnf.j2"
+    dest: "/opt/wordpress/config/master.cnf"
+    mode: '0644'
+  become: yes
+
+- name: Запуск MySQL Master контейнера
+  community.docker.docker_container:
+    name: mysql_master
+    image: mysql:5.7
+    env:
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+      MYSQL_DATABASE: "{{ wp_db_name }}"
+      MYSQL_USER: "{{ wp_db_user }}"
+      MYSQL_PASSWORD: "{{ wp_db_password }}"
+    volumes:
+      - mysql_master_data:/var/lib/mysql
+      - /opt/wordpress/config/master.cnf:/etc/mysql/conf.d/config.cnf
+    networks:
+      - name: wp_network
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    state: started
+    restart_policy: unless-stopped
+  become: yes
+
+- name: Ожидание готовности MySQL Master (через healthcheck)
+  community.docker.docker_container_info:
+    name: mysql_master
+  register: mysql_master_status
+  until: "mysql_master_status.container.State.Running and mysql_master_status.container.State.Health.Status == 'healthy'"
+  retries: 20
+  delay: 5
+  become: yes
+
+- name: Создание пользователя для репликации на Мастере
+  community.mysql.mysql_user:
+    name: replicator
+    password: "{{ replication_password }}"
+    priv: "*.*:REPLICATION SLAVE"
+    host: '%'
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_host: localhost
+    login_port: 3306
+  become: yes
+
+- name: Получение позиции бинарного лога Мастера (используем mysql_replication)
+  community.mysql.mysql_replication:
+    mode: getprimary
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_host: localhost
+    login_port: 3306
+  register: master_status_output
+  become: yes
+
+- name: Сохранение Master Log File и Position в факты для использования в других ролях
+  set_fact:
+    master_log_file: "{{ master_status_output.File }}"
+    master_log_pos: "{{ master_status_output.Position }}"
+  become: yes

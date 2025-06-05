@@ -1,0 +1,9 @@
+[mysqld]
+bind-address = 0.0.0.0
+server-id = 1  # Уникальный идентификатор сервера. Должен отличаться у каждого узла (мастер = 1, реплика = 2 и т.д.)
+expire_logs_days = 7
+log_bin = /var/lib/mysql/mysql-bin
+binlog_format = ROW
+explicit_defaults_for_timestamp = 1
+gtid_mode = ON
+enforce_gtid_consistency = ON

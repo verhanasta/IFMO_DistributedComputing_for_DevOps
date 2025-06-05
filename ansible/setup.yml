@@ -1,0 +1,238 @@
+# ansible/setup.yml (Исправленный главный плейбук)
+- name: Подготовка хоста, развертывание MySQL и WordPress с репликацией
+  hosts: wordpress
+  become: yes
+  tasks:
+    - name: Удаление старого WordPress контейнера, если существует
+      community.docker.docker_container:
+        name: wp_app
+        state: absent
+        force_kill: yes
+      ignore_errors: yes
+
+    - name: Удаление старого MySQL Master контейнера, если существует
+      community.docker.docker_container:
+        name: mysql_master
+        state: absent
+        force_kill: yes
+      ignore_errors: yes
+
+    - name: Удаление старого MySQL Replica контейнера, если существует
+      community.docker.docker_container:
+        name: mysql_replica
+        state: absent
+        force_kill: yes
+      ignore_errors: yes
+
+    - name: Удаление старой Docker сети 'wp_network', если существует (после удаления контейнеров)
+      community.docker.docker_network:
+        name: wp_network
+        state: absent
+      ignore_errors: yes
+
+    - name: Удаление Docker volume для MySQL Master, если существует
+      community.docker.docker_volume:
+        name: mysql_master_data
+        state: absent
+      ignore_errors: yes
+
+    - name: Удаление Docker volume для MySQL Replica, если существует
+      community.docker.docker_volume:
+        name: mysql_replica_data
+        state: absent
+      ignore_errors: yes
+
+    - name: Удаление Docker volume для WordPress, если существует
+      community.docker.docker_volume:
+        name: wordpress_data
+        state: absent
+      ignore_errors: yes
+
+    - name: Обновить кеш apt
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Установить зависимости для Docker
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+    - name: Добавить GPG ключ Docker
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Добавить репозиторий Docker
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Установить Docker пакеты
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+
+    - name: Запустить и включить Docker сервис
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Установить python3-pip (для Ansible Docker модулей)
+      ansible.builtin.apt:
+        name: python3-pip
+        state: present
+
+    - name: Установить docker-compose-plugin
+      ansible.builtin.apt:
+        name: docker-compose-plugin
+        state: present
+      ignore_errors: yes
+
+    - name: Установить библиотеку PyMySQL через apt
+      ansible.builtin.apt:
+        name: python3-pymysql
+        state: present
+
+    - name: Создание директории конфигов для MySQL и WordPress
+      ansible.builtin.file:
+        path: /opt/wordpress/config
+        state: directory
+        mode: '0755'
+
+    - name: Развертывание конфига мастера (master.cnf)
+      ansible.builtin.template:
+        src: "roles/mysql_master/templates/master.cnf.j2"
+        dest: "/opt/wordpress/config/master.cnf"
+        mode: '0644'
+
+    - name: Развертывание конфига реплики (replica.cnf)
+      ansible.builtin.template:
+        src: "roles/mysql_replica/templates/replica.cnf.j2"
+        dest: "/opt/wordpress/config/replica.cnf"
+        mode: '0644'
+
+    - name: Копирование docker-compose.yml (для всего стека)
+      ansible.builtin.template:
+        src: "docker-compose.yml.j2"
+        dest: "/opt/wordpress/docker-compose.yml"
+        mode: '0644'
+
+#    - name: DEBUG Вывод содержимого скопированного docker-compose.yml с удаленного хоста
+#      ansible.builtin.slurp:
+#        src: "/opt/wordpress/docker-compose.yml"
+#      register: remote_compose_file_content
+#      become: yes
+#
+#    - name: DEBUG Декодированное содержимое docker-compose.yml
+#      ansible.builtin.debug:
+#        msg: "{{ remote_compose_file_content.content | b64decode }}"
+
+    - name: Запуск MySQL и WordPress контейнеров с Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: /opt/wordpress
+        state: present
+        pull: 'always'
+        recreate: always
+        remove_orphans: yes
+        wait: yes
+        wait_timeout: 600
+      become: yes
+
+    - name: Ожидание доступности MySQL Master (после Compose)
+      community.mysql.mysql_info:
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_host: localhost
+        login_port: 3306
+      register: mysql_master_reachable
+      until: mysql_master_reachable is success
+      retries: 30
+      delay: 10
+      become: yes
+
+    - name: Создание пользователя для репликации на Мастере
+      community.mysql.mysql_user:
+        name: replicator
+        password: "{{ replication_password }}"
+        priv: "*.*:REPLICATION SLAVE"
+        host: '%'
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_host: localhost # ИСПРАВЛЕНО
+        login_port: 3306
+      become: yes
+
+    - name: Получение позиции бинарного лога Мастера
+      community.mysql.mysql_replication:
+        mode: getprimary
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_host: localhost
+        login_port: 3306
+      register: master_status_output
+      become: yes
+
+    - name: Сохранение Master Log File и Position в факты для использования в других ролях
+      set_fact:
+        master_log_file: "{{ master_status_output.File }}"
+        master_log_pos: "{{ master_status_output.Position }}"
+      become: yes
+
+    - name: Ожидание доступности MySQL Replica (после Compose)
+      community.mysql.mysql_info:
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_host: localhost
+        login_port: 3307
+      register: mysql_replica_reachable
+      until: mysql_replica_reachable is success
+      retries: 30
+      delay: 10
+      become: yes
+
+    - name: Настройка репликации на Replica (CHANGE PRIMARY TO)
+      community.mysql.mysql_replication:
+        mode: changeprimary
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_host: localhost
+        login_port: 3307
+        primary_host: 'mysql_master'
+        primary_user: 'replicator'
+        primary_password: "{{ replication_password }}"
+        primary_port: 3306
+        primary_log_file: "{{ hostvars[inventory_hostname]['master_log_file'] }}"
+        primary_log_pos: "{{ hostvars[inventory_hostname]['master_log_pos'] }}"
+      become: yes
+
+    - name: Запуск репликации на Replica (START REPLICA)
+      community.mysql.mysql_replication:
+        mode: startreplica
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_host: localhost
+        login_port: 3307
+      become: yes
+
+    - name: Проверка статуса репликации на Replica (GET REPLICA)
+      community.mysql.mysql_replication:
+        mode: getreplica
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_host: localhost
+        login_port: 3307
+      register: slave_status
+      until: "slave_status.Slave_IO_Running == 'Yes' and slave_status.Slave_SQL_Running == 'Yes'"
+      retries: 30
+      delay: 5
+      failed_when: "slave_status.Last_SQL_Error is defined and slave_status.Last_SQL_Error != ''"
+      become: yes
