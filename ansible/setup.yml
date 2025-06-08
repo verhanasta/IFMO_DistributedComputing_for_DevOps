@@ -100,7 +100,6 @@
         state: absent
       ignore_errors: yes
 
-    # --- 3. Создание директорий и копирование конфигов ---
     - name: Создание директории конфигов для MySQL и WordPress
       ansible.builtin.file:
         path: /opt/wordpress/config
