@@ -141,7 +141,7 @@
         project_src: /opt/wordpress
         state: present
         pull: 'always'
-        recreate: yes
+        recreate: 'always'
         remove_orphans: yes
         wait: yes
         wait_timeout: 600
