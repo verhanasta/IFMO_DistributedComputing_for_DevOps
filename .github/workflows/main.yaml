@@ -47,13 +47,17 @@ jobs:
         run: |
           ansible-galaxy collection install community.docker
           ansible-galaxy collection install community.mysql
+          
+      - name: Временная отладка секрета (ОЧЕНЬ ОПАСНО, УДАЛИТЬ ПОСЛЕ ПРОВЕРКИ!)
+        run: | 
+          echo "Значение секрета: ${{ secrets.ANSIBLE_MYSQL_PASSWORD }}"
 
       - name: Run playbook
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/setup.yml \
-            --extra-vars "mysql_root_password=${{ secrets.MYSQL_ROOT_PASSWORD }} \
-                         replication_password=${{ secrets.REPLICATION_PASSWORD }} \
-                         wp_db_user=${{ secrets.WP_DB_USER }} \
-                         wp_db_password=${{ secrets.WP_DB_PASSWORD }} \
-                         wp_db_name=${{ secrets.WP_DB_NAME }}\
-                         ansible_pass=${{ secrets.ANSIBLE_MYSQL_PASSWORD }}"
+            --extra-vars "mysql_root_password=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+            --extra-vars "replication_password=${{ secrets.REPLICATION_PASSWORD }}" \
+            --extra-vars "wp_db_user=${{ secrets.WP_DB_USER }}" \
+            --extra-vars "wp_db_password=${{ secrets.WP_DB_PASSWORD }}" \
+            --extra-vars "wp_db_name=${{ secrets.WP_DB_NAME }}" \
+            --extra-vars "ansible_pass=${{ secrets.ANSIBLE_MYSQL_PASSWORD }}"
