@@ -150,7 +150,7 @@
     - name: Ожидание доступности MySQL Master (после Compose)
       community.mysql.mysql_info:
         login_user: ansible_admin
-        login_password: "{{ ansible_mysql_password }}"
+        login_password: "{{ ansible_pass }}"
         login_host: localhost
         login_port: 3306
       register: mysql_master_reachable
@@ -167,7 +167,7 @@
         host: '%'
         state: present
         login_user: ansible_admin
-        login_password: "{{ ansible_mysql_password }}"
+        login_password: "{{ ansible_pass }}"
         login_host: localhost
         login_port: 3306
       become: yes
@@ -181,7 +181,7 @@
 
     - name: Создание дампа всех баз данных MySQL Master (через mysqldump на хосте)
       ansible.builtin.shell: |
-        mysqldump -h localhost -P 3306 -u ansible_admin -p'{{ ansible_mysql_password }}' --all-databases --single-transaction > /tmp/mysql_dump/all_databases.sql
+        mysqldump -h localhost -P 3306 -u ansible_admin -p'{{ ansible_pass }}' --all-databases --single-transaction > /tmp/mysql_dump/all_databases.sql
       register: mysqldump_output
       become: yes
       changed_when: mysqldump_output.rc == 0
@@ -190,7 +190,7 @@
       community.mysql.mysql_replication:
         mode: getprimary
         login_user: ansible_admin
-        login_password: "{{ ansible_mysql_password }}"
+        login_password: "{{ ansible_pass }}"
         login_host: localhost
         login_port: 3306
       register: master_status_output
@@ -205,7 +205,7 @@
     - name: Ожидание доступности MySQL Replica (после Compose)
       community.mysql.mysql_info:
         login_user: ansible_admin
-        login_password: "{{ ansible_mysql_password }}"
+        login_password: "{{ ansible_pass }}"
         login_host: localhost
         login_port: 3307
       register: mysql_replica_reachable
@@ -216,7 +216,7 @@
 
     - name: Импорт дампа на MySQL Replica (через mysql на хосте)
       ansible.builtin.shell: |
-        mysql -h localhost -P 3307 -u ansible_admin -p'{{ ansible_mysql_password }}' < /tmp/mysql_dump/all_databases.sql
+        mysql -h localhost -P 3307 -u ansible_admin -p'{{ ansible_pass }}' < /tmp/mysql_dump/all_databases.sql
       register: mysql_import_output
       become: yes
       changed_when: mysql_import_output.rc == 0
@@ -225,7 +225,7 @@
       community.mysql.mysql_replication:
         mode: changeprimary
         login_user: ansible_admin
-        login_password: "{{ ansible_mysql_password }}"
+        login_password: "{{ ansible_pass }}"
         login_host: localhost
         login_port: 3307
         primary_host: 'mysql_master'
@@ -240,7 +240,7 @@
       community.mysql.mysql_replication:
         mode: startreplica
         login_user: ansible_admin
-        login_password: "{{ ansible_mysql_password }}"
+        login_password: "{{ ansible_pass }}"
         login_host: localhost
         login_port: 3307
       become: yes
@@ -249,7 +249,7 @@
       community.mysql.mysql_replication:
         mode: getreplica
         login_user: ansible_admin
-        login_password: "{{ ansible_mysql_password }}"
+        login_password: "{{ ansible_pass }}"
         login_host: localhost
         login_port: 3307
       register: slave_status
