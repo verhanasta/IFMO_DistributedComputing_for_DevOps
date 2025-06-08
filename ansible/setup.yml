@@ -1,53 +1,7 @@
-# ansible/setup.yml (Исправленный главный плейбук)
 - name: Подготовка хоста, развертывание MySQL и WordPress с репликацией
   hosts: wordpress
   become: yes
   tasks:
-    - name: Удаление старого WordPress контейнера, если существует
-      community.docker.docker_container:
-        name: wp_app
-        state: absent
-        force_kill: yes
-      ignore_errors: yes
-
-    - name: Удаление старого MySQL Master контейнера, если существует
-      community.docker.docker_container:
-        name: mysql_master
-        state: absent
-        force_kill: yes
-      ignore_errors: yes
-
-    - name: Удаление старого MySQL Replica контейнера, если существует
-      community.docker.docker_container:
-        name: mysql_replica
-        state: absent
-        force_kill: yes
-      ignore_errors: yes
-
-    - name: Удаление старой Docker сети 'wp_network', если существует (после удаления контейнеров)
-      community.docker.docker_network:
-        name: wp_network
-        state: absent
-      ignore_errors: yes
-
-    - name: Удаление Docker volume для MySQL Master, если существует
-      community.docker.docker_volume:
-        name: mysql_master_data
-        state: absent
-      ignore_errors: yes
-
-    - name: Удаление Docker volume для MySQL Replica, если существует
-      community.docker.docker_volume:
-        name: mysql_replica_data
-        state: absent
-      ignore_errors: yes
-
-    - name: Удаление Docker volume для WordPress, если существует
-      community.docker.docker_volume:
-        name: wordpress_data
-        state: absent
-      ignore_errors: yes
-
     - name: Обновить кеш apt
       ansible.builtin.apt:
         update_cache: yes
@@ -101,6 +55,52 @@
         name: python3-pymysql
         state: present
 
+    - name: Удаление старого WordPress контейнера, если существует
+      community.docker.docker_container:
+        name: wp_app
+        state: absent
+        force_kill: yes
+      ignore_errors: yes
+
+    - name: Удаление старого MySQL Master контейнера, если существует
+      community.docker.docker_container:
+        name: mysql_master
+        state: absent
+        force_kill: yes
+      ignore_errors: yes
+
+    - name: Удаление старого MySQL Replica контейнера, если существует
+      community.docker.docker_container:
+        name: mysql_replica
+        state: absent
+        force_kill: yes
+      ignore_errors: yes
+
+    - name: Удаление старой Docker сети 'wp_network', если существует (после удаления контейнеров)
+      community.docker.docker_network:
+        name: wp_network
+        state: absent
+      ignore_errors: yes
+
+    - name: Удаление Docker volume для MySQL Master, если существует
+      community.docker.docker_volume:
+        name: mysql_master_data
+        state: absent
+      ignore_errors: yes
+
+    - name: Удаление Docker volume для MySQL Replica, если существует
+      community.docker.docker_volume:
+        name: mysql_replica_data
+        state: absent
+      ignore_errors: yes
+
+    - name: Удаление Docker volume для WordPress, если существует
+      community.docker.docker_volume:
+        name: wordpress_data
+        state: absent
+      ignore_errors: yes
+
+    # --- 3. Создание директорий и копирование конфигов ---
     - name: Создание директории конфигов для MySQL и WordPress
       ansible.builtin.file:
         path: /opt/wordpress/config
@@ -124,16 +124,6 @@
         src: "docker-compose.yml.j2"
         dest: "/opt/wordpress/docker-compose.yml"
         mode: '0644'
-
-#    - name: DEBUG Вывод содержимого скопированного docker-compose.yml с удаленного хоста
-#      ansible.builtin.slurp:
-#        src: "/opt/wordpress/docker-compose.yml"
-#      register: remote_compose_file_content
-#      become: yes
-#
-#    - name: DEBUG Декодированное содержимое docker-compose.yml
-#      ansible.builtin.debug:
-#        msg: "{{ remote_compose_file_content.content | b64decode }}"
 
     - name: Запуск MySQL и WordPress контейнеров с Docker Compose
       community.docker.docker_compose_v2:
@@ -167,11 +157,34 @@
         state: present
         login_user: root
         login_password: "{{ mysql_root_password }}"
-        login_host: localhost # ИСПРАВЛЕНО
+        login_host: localhost
         login_port: 3306
       become: yes
 
-    - name: Получение позиции бинарного лога Мастера
+    - name: Создание временной директории для дампа на хосте
+      ansible.builtin.file:
+        path: /tmp/mysql_dump
+        state: directory
+        mode: '0755'
+      become: yes
+
+    - name: Создание дампа всех баз данных MySQL Master
+      community.docker.docker_exec:
+        container: mysql_master
+        command: "mysqldump -u root -p'{{ mysql_root_password }}' --all-databases --single-transaction > /tmp/all_databases.sql"
+        chdir: /tmp
+      register: mysqldump_output
+      become: yes
+      changed_when: mysqldump_output.rc == 0
+
+    - name: Получение дампа с контейнера Master на хост
+      community.docker.docker_cp:
+        container: mysql_master
+        src: /tmp/all_databases.sql
+        dest: /tmp/mysql_dump/all_databases.sql
+      become: yes
+
+    - name: Получение позиции бинарного лога Мастера (после дампа)
       community.mysql.mysql_replication:
         mode: getprimary
         login_user: root
@@ -198,6 +211,14 @@
       retries: 30
       delay: 10
       become: yes
+
+    - name: Импорт дампа на MySQL Replica
+      community.docker.docker_exec:
+        container: mysql_replica
+        command: "mysql -u root -p'{{ mysql_root_password }}' < /tmp/all_databases.sql"
+        chdir: /tmp
+      become: yes
+      changed_when: true
 
     - name: Настройка репликации на Replica (CHANGE PRIMARY TO)
       community.mysql.mysql_replication:
@@ -234,5 +255,10 @@
       until: "slave_status.Slave_IO_Running == 'Yes' and slave_status.Slave_SQL_Running == 'Yes'"
       retries: 30
       delay: 5
-      failed_when: "slave_status.Last_SQL_Error is defined and slave_status.Last_SQL_Error != ''"
+      become: yes
+
+    - name: Удаление временной директории для дампа на хосте
+      ansible.builtin.file:
+        path: /tmp/mysql_dump
+        state: absent
       become: yes
