@@ -214,13 +214,12 @@
       delay: 10
       become: yes
 
-    - name: Импорт дампа на MySQL Replica
-      community.docker.docker_exec:
-        container: mysql_replica
-        command: "mysql -u root -p'{{ mysql_root_password }}' < /tmp/all_databases.sql"
-        chdir: /tmp
+    - name: Импорт дампа на MySQL Replica (через mysql на хосте)
+      ansible.builtin.shell: |
+        mysql -h localhost -P 3307 -u root -p'{{ mysql_root_password }}' < /tmp/mysql_dump/all_databases.sql
+      register: mysql_import_output
       become: yes
-      changed_when: true
+      changed_when: mysql_import_output.rc == 0
 
     - name: Настройка репликации на Replica (CHANGE PRIMARY TO)
       community.mysql.mysql_replication:
