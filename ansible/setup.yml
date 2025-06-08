@@ -67,15 +67,6 @@
         mode: '0644'
       become: yes
 
-    - name: Проверить содержимое SQL-скрипта инициализации (ТОЛЬКО ДЛЯ ОТЛАДКИ!)
-      ansible.builtin.shell: cat /opt/wordpress/ansible_mysql_master_init.sql
-      register: init_script_content
-      become: yes
-
-    - name: Вывести содержимое скрипта (ОЧЕНЬ ОСТОРОЖНО)
-      ansible.builtin.debug:
-        var: init_script_content.stdout
-
     - name: Создание директории конфигов для MySQL и WordPress
       ansible.builtin.file:
         path: /opt/wordpress/config
