@@ -211,7 +211,7 @@
       register: mysql_replica_reachable
       until: mysql_replica_reachable is success
       retries: 30
-      delay: 10
+      delay: 20
       become: yes
 
     - name: Импорт дампа на MySQL Replica (через mysql на хосте)
