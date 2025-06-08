@@ -44,10 +44,11 @@
         name: python3-pip
         state: present
 
-    - name: Установить MySQL клиентские утилиты (mysqldump, mysql) на хост
-      ansible.builtin.apt:
-        name: mysql-client
+    - name: Установить Ansible Core (для ansible-galaxy)
+      ansible.builtin.pip:
+        name: ansible-core
         state: present
+      become: no
 
     - name: Установить коллекцию Ansible 'community.docker'
       ansible.builtin.command: ansible-galaxy collection install community.docker
@@ -66,6 +67,18 @@
       ansible.builtin.apt:
         name: python3-pymysql
         state: present
+
+    - name: Установить MySQL клиентские утилиты (mysqldump, mysql) на хост
+      ansible.builtin.apt:
+        name: mysql-client
+        state: present
+
+    - name: Копирование SQL-скрипта инициализации MySQL Master
+      ansible.builtin.template:
+        src: "files/mysql_master_init.sql.j2" # Путь к файлу на контроллере Ansible
+        dest: "/opt/wordpress/ansible_mysql_master_init.sql" # Путь на целевом хосте
+        mode: '0644'
+      become: yes
 
     - name: Удаление старого WordPress контейнера, если существует
       community.docker.docker_container:
@@ -141,7 +154,7 @@
         project_src: /opt/wordpress
         state: present
         pull: 'always'
-        recreate: always
+        recreate: yes
         remove_orphans: yes
         wait: yes
         wait_timeout: 600
@@ -149,14 +162,14 @@
 
     - name: Ожидание доступности MySQL Master (после Compose)
       community.mysql.mysql_info:
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
+        login_user: ansible_admin
+        login_password: "{{ ansible_mysql_password }}"
         login_host: localhost
         login_port: 3306
       register: mysql_master_reachable
       until: mysql_master_reachable is success
       retries: 30
-      delay: 10
+      delay: 15
       become: yes
 
     - name: Создание пользователя для репликации на Мастере
@@ -166,8 +179,8 @@
         priv: "*.*:REPLICATION SLAVE"
         host: '%'
         state: present
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
+        login_user: ansible_admin
+        login_password: "{{ ansible_mysql_password }}"
         login_host: localhost
         login_port: 3306
       become: yes
@@ -181,7 +194,7 @@
 
     - name: Создание дампа всех баз данных MySQL Master (через mysqldump на хосте)
       ansible.builtin.shell: |
-        mysqldump -h localhost -P 3306 -u root -p'{{ mysql_root_password }}' --all-databases --single-transaction > /tmp/mysql_dump/all_databases.sql
+        mysqldump -h localhost -P 3306 -u ansible_admin -p'{{ ansible_mysql_password }}' --all-databases --single-transaction > /tmp/mysql_dump/all_databases.sql
       register: mysqldump_output
       become: yes
       changed_when: mysqldump_output.rc == 0
@@ -189,8 +202,8 @@
     - name: Получение позиции бинарного лога Мастера (после дампа)
       community.mysql.mysql_replication:
         mode: getprimary
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
+        login_user: ansible_admin
+        login_password: "{{ ansible_mysql_password }}"
         login_host: localhost
         login_port: 3306
       register: master_status_output
@@ -204,19 +217,19 @@
 
     - name: Ожидание доступности MySQL Replica (после Compose)
       community.mysql.mysql_info:
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
+        login_user: ansible_admin
+        login_password: "{{ ansible_mysql_password }}"
         login_host: localhost
         login_port: 3307
       register: mysql_replica_reachable
       until: mysql_replica_reachable is success
       retries: 30
-      delay: 20
+      delay: 10
       become: yes
 
     - name: Импорт дампа на MySQL Replica (через mysql на хосте)
       ansible.builtin.shell: |
-        mysql -h localhost -P 3307 -u root -p'{{ mysql_root_password }}' < /tmp/mysql_dump/all_databases.sql
+        mysql -h localhost -P 3307 -u ansible_admin -p'{{ ansible_mysql_password }}' < /tmp/mysql_dump/all_databases.sql
       register: mysql_import_output
       become: yes
       changed_when: mysql_import_output.rc == 0
@@ -224,8 +237,8 @@
     - name: Настройка репликации на Replica (CHANGE PRIMARY TO)
       community.mysql.mysql_replication:
         mode: changeprimary
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
+        login_user: ansible_admin
+        login_password: "{{ ansible_mysql_password }}"
         login_host: localhost
         login_port: 3307
         primary_host: 'mysql_master'
@@ -239,8 +252,8 @@
     - name: Запуск репликации на Replica (START REPLICA)
       community.mysql.mysql_replication:
         mode: startreplica
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
+        login_user: ansible_admin
+        login_password: "{{ ansible_mysql_password }}"
         login_host: localhost
         login_port: 3307
       become: yes
@@ -248,8 +261,8 @@
     - name: Проверка статуса репликации на Replica (GET REPLICA)
       community.mysql.mysql_replication:
         mode: getreplica
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
+        login_user: ansible_admin
+        login_password: "{{ ansible_mysql_password }}"
         login_host: localhost
         login_port: 3307
       register: slave_status

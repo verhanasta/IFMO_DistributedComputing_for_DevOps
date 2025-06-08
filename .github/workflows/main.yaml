@@ -55,4 +55,5 @@ jobs:
                          replication_password=${{ secrets.REPLICATION_PASSWORD }} \
                          wp_db_user=${{ secrets.WP_DB_USER }} \
                          wp_db_password=${{ secrets.WP_DB_PASSWORD }} \
-                         wp_db_name=${{ secrets.WP_DB_NAME }}"
+                         wp_db_name=${{ secrets.WP_DB_NAME }}\
+                         ansible_mysql_password={{ secrets.ANSIBLE_MYSQL_PASSWORD }}"
