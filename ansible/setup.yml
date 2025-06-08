@@ -62,8 +62,8 @@
 
     - name: Копирование SQL-скрипта инициализации MySQL Master
       ansible.builtin.template:
-        src: "files/mysql_master_init.sql.j2" # Путь к файлу на контроллере Ansible
-        dest: "/opt/wordpress/ansible_mysql_master_init.sql" # Путь на целевом хосте
+        src: "files/mysql_master_init.sql.j2"
+        dest: "/opt/wordpress/ansible_mysql_master_init.sql"
         mode: '0644'
       become: yes
 
