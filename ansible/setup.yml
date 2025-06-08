@@ -44,6 +44,11 @@
         name: python3-pip
         state: present
 
+    - name: Установить MySQL клиентские утилиты (mysqldump, mysql) на хост
+      ansible.builtin.apt:
+        name: mysql-client
+        state: present
+
     - name: Установить коллекцию Ansible 'community.docker'
       ansible.builtin.command: ansible-galaxy collection install community.docker
       args:
@@ -174,11 +179,9 @@
         mode: '0755'
       become: yes
 
-    - name: Создание дампа всех баз данных MySQL Master
-      community.docker.docker_exec:
-        container: mysql_master
-        command: "mysqldump -u root -p'{{ mysql_root_password }}' --all-databases --single-transaction > /tmp/all_databases.sql"
-        chdir: /tmp
+    - name: Создание дампа всех баз данных MySQL Master (через mysqldump на хосте)
+      ansible.builtin.shell: |
+        mysqldump -h localhost -P 3306 -u root -p'{{ mysql_root_password }}' --all-databases --single-transaction > /tmp/mysql_dump/all_databases.sql
       register: mysqldump_output
       become: yes
       changed_when: mysqldump_output.rc == 0
