@@ -44,19 +44,6 @@
         name: python3-pip
         state: present
 
-    - name: Установить Ansible Core (для ansible-galaxy)
-      ansible.builtin.pip:
-        name: ansible-core
-        state: present
-      become: no
-
-    - name: Установить коллекцию Ansible 'community.docker'
-      ansible.builtin.command: ansible-galaxy collection install community.docker
-      args:
-        creates: ~/.ansible/collections/ansible_collections/community/docker
-      become: no
-      ignore_errors: yes
-
     - name: Установить docker-compose-plugin
       ansible.builtin.apt:
         name: docker-compose-plugin
