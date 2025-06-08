@@ -186,13 +186,6 @@
       become: yes
       changed_when: mysqldump_output.rc == 0
 
-    - name: Получение дампа с контейнера Master на хост
-      community.docker.docker_cp:
-        container: mysql_master
-        src: /tmp/all_databases.sql
-        dest: /tmp/mysql_dump/all_databases.sql
-      become: yes
-
     - name: Получение позиции бинарного лога Мастера (после дампа)
       community.mysql.mysql_replication:
         mode: getprimary
