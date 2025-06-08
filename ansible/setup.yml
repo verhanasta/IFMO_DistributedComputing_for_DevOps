@@ -67,51 +67,6 @@
         mode: '0644'
       become: yes
 
-    - name: Удаление старого WordPress контейнера, если существует
-      community.docker.docker_container:
-        name: wp_app
-        state: absent
-        force_kill: yes
-#      ignore_errors: yes
-
-    - name: Удаление старого MySQL Master контейнера, если существует
-      community.docker.docker_container:
-        name: mysql_master
-        state: absent
-        force_kill: yes
-#      ignore_errors: yes
-
-    - name: Удаление старого MySQL Replica контейнера, если существует
-      community.docker.docker_container:
-        name: mysql_replica
-        state: absent
-        force_kill: yes
-#      ignore_errors: yes
-
-    - name: Удаление старой Docker сети 'wp_network', если существует (после удаления контейнеров)
-      community.docker.docker_network:
-        name: wp_network
-        state: absent
-#      ignore_errors: yes
-
-    - name: Удаление Docker volume для MySQL Master, если существует
-      community.docker.docker_volume:
-        name: mysql_master_data
-        state: absent
-#      ignore_errors: yes
-
-    - name: Удаление Docker volume для MySQL Replica, если существует
-      community.docker.docker_volume:
-        name: mysql_replica_data
-        state: absent
-#      ignore_errors: yes
-
-    - name: Удаление Docker volume для WordPress, если существует
-      community.docker.docker_volume:
-        name: wordpress_data
-        state: absent
-#      ignore_errors: yes
-
     - name: Создание директории конфигов для MySQL и WordPress
       ansible.builtin.file:
         path: /opt/wordpress/config
