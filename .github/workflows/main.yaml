@@ -3,7 +3,7 @@ name: Deploy WordPress with MySQL Replication
 on:
   push:
     branches:
-      - DZ2
+      - DZ-2
 
 jobs:
   deploy:
