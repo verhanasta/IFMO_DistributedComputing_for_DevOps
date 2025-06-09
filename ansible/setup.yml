@@ -136,10 +136,10 @@
 
     - name: Создание дампа всех баз данных MySQL Master (через mysqldump на хосте)
       ansible.builtin.shell: |
-        mysqldump -h localhost -P 3306 -u ansible_admin -p'{{ ansible_pass }}' --all-databases --single-transaction > /tmp/mysql_dump/all_databases.sql
-      register: mysqldump_output
+        mysqldump -h 127.0.0.1 -P 3306 -u ansible_admin -p'{{ ansible_pass }}' --all-databases --single-transaction > /tmp/mysql_dump/all_databases.sql
+      args:
+        creates: /tmp/mysql_dump/all_databases.sql
       become: yes
-      changed_when: mysqldump_output.rc == 0
 
     - name: Получение позиции бинарного лога Мастера (после дампа)
       community.mysql.mysql_replication:
