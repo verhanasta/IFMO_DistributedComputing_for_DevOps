@@ -180,7 +180,7 @@
       community.mysql.mysql_replication:
         mode: changeprimary
         login_user: root
-        login_password: "{{{ mysql_root_password }}"
+        login_password: "{{ mysql_root_password }}"
         login_host: localhost
         login_port: 3307
         primary_host: 'mysql_master'
