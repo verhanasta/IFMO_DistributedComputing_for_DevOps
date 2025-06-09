@@ -171,7 +171,7 @@
 
     - name: Импорт дампа на MySQL Replica (через mysql на хосте)
       ansible.builtin.shell: |
-        mysql -h 127.0.0.1 -P 3307 -u root -p'{{ mysql_root_password }}' < /tmp/mysql_dump/all_databases.sql # <-- ИСПРАВЛЕНИЕ ЗДЕСЬ
+        mysql -h 127.0.0.1 -P 3307 -u root -p'{{ mysql_root_password }}' --set-gtid-purged=OFF < /tmp/mysql_dump/all_databases.sql
       args:
         removes: /tmp/mysql_dump/all_databases.sql
       become: yes
