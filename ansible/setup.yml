@@ -218,3 +218,9 @@
         path: /tmp/mysql_dump
         state: absent
       become: yes
+
+    - name: Удаление SQL-скрипта инициализации Мастера с хоста
+      ansible.builtin.file:
+        path: /opt/wordpress/ansible/files/mysql_master_init.sql.j2
+        state: absent
+      become: yes
