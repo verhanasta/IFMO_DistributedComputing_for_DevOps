@@ -179,8 +179,8 @@
     - name: Настройка репликации на Replica (CHANGE PRIMARY TO)
       community.mysql.mysql_replication:
         mode: changeprimary
-        login_user: ansible_admin
-        login_password: "{{ ansible_pass }}"
+        login_user: root
+        login_password: "{{{ mysql_root_password }}"
         login_host: localhost
         login_port: 3307
         primary_host: 'mysql_master'
@@ -194,8 +194,8 @@
     - name: Запуск репликации на Replica (START REPLICA)
       community.mysql.mysql_replication:
         mode: startreplica
-        login_user: ansible_admin
-        login_password: "{{ ansible_pass }}"
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
         login_host: localhost
         login_port: 3307
       become: yes
@@ -203,8 +203,8 @@
     - name: Проверка статуса репликации на Replica (GET REPLICA)
       community.mysql.mysql_replication:
         mode: getreplica
-        login_user: ansible_admin
-        login_password: "{{ ansible_pass }}"
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
         login_host: localhost
         login_port: 3307
       register: slave_status
