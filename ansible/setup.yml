@@ -159,8 +159,8 @@
 
     - name: Ожидание доступности MySQL Replica (после Compose)
       community.mysql.mysql_info:
-        login_user: ansible_admin
-        login_password: "{{ ansible_pass }}"
+        login_user: root
+        login_password: "{{{ mysql_root_password }}"
         login_host: localhost
         login_port: 3307
       register: mysql_replica_reachable
