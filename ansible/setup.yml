@@ -136,7 +136,7 @@
 
     - name: Создание дампа всех баз данных MySQL Master (через mysqldump на хосте)
       ansible.builtin.shell: |
-        mysqldump -h 127.0.0.1 -P 3306 -u ansible_admin -p'{{ ansible_pass }}' --all-databases --single-transaction > /tmp/mysql_dump/all_databases.sql
+        mysqldump -h 127.0.0.1 -P 3306 -u ansible_admin -p'{{ ansible_pass }}' --all-databases --single-transaction --set-gtid-purged=OFF > /tmp/mysql_dump/all_databases.sql
       args:
         creates: /tmp/mysql_dump/all_databases.sql
       become: yes
@@ -171,7 +171,7 @@
 
     - name: Импорт дампа на MySQL Replica (через mysql на хосте)
       ansible.builtin.shell: |
-        mysql -h 127.0.0.1 -P 3307 -u root -p'{{ mysql_root_password }}' --set-gtid-purged=OFF < /tmp/mysql_dump/all_databases.sql
+        mysql -h 127.0.0.1 -P 3307 -u root -p'{{ mysql_root_password }}' < /tmp/mysql_dump/all_databases.sql
       args:
         removes: /tmp/mysql_dump/all_databases.sql
       become: yes
