@@ -137,7 +137,7 @@
     - name: Создание дампа всех баз данных MySQL Master (используя mysql_db)
       community.mysql.mysql_db:
         state: dump
-        name: "all"
+        name: "{{ wp_db_name }}"
         target: /tmp/mysql_dump/all_databases.sql
         single_transaction: yes
         dump_extra_args: "--set-gtid-purged=OFF"
@@ -178,7 +178,7 @@
     - name: Импорт дампа на MySQL Replica (используя mysql_db)
       community.mysql.mysql_db:
         state: import
-        name: "*"
+        name: "{{ wp_db_name }}"
         target: /tmp/mysql_dump/all_databases.sql
         login_user: root
         login_password: "{{ mysql_root_password }}"
