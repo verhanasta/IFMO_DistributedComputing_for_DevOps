@@ -137,7 +137,7 @@
     - name: Создание дампа всех баз данных MySQL Master (используя mysql_db)
       community.mysql.mysql_db:
         state: dump
-        name: "_all"
+        name: "all"
         target: /tmp/mysql_dump/all_databases.sql
         single_transaction: yes
         dump_extra_args: "--set-gtid-purged=OFF"
