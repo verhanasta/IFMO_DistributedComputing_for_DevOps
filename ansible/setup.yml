@@ -139,7 +139,8 @@
         state: dump
         name: "*"
         target: /tmp/mysql_dump/all_databases.sql
-        dump_opts: --single-transaction --set-gtid-purged=OFF
+        single_transaction: yes
+        dump_extra_args: "--set-gtid-purged=OFF"
         login_user: ansible_admin
         login_password: "{{ ansible_pass }}"
         login_host: 127.0.0.1
