@@ -127,27 +127,16 @@
         login_port: 3306
       become: yes
 
-    - name: Создание временной директории для дампа на хосте
-      ansible.builtin.file:
-        path: /tmp/mysql_dump
-        state: directory
-        mode: '0755'
-      become: yes
-
-    - name: Создание дампа всех баз данных MySQL Master (используя mysql_db)
-      community.mysql.mysql_db:
-        state: dump
-        name: "{{ wp_db_name }}"
-        target: /tmp/mysql_dump/all_databases.sql
-        single_transaction: yes
-        dump_extra_args: "--set-gtid-purged=OFF"
+    - name: Запись состояния в бинарный лог (FLUSH LOGS)
+      community.mysql.mysql_query:
         login_user: ansible_admin
         login_password: "{{ ansible_pass }}"
         login_host: 127.0.0.1
         login_port: 3306
+        query: "FLUSH LOGS;"
       become: yes
 
-    - name: Получение позиции бинарного лога Мастера (после дампа)
+    - name: Получение позиции бинарного лога Мастера (после FLUSH LOGS)
       community.mysql.mysql_replication:
         mode: getprimary
         login_user: ansible_admin
@@ -157,13 +146,13 @@
       register: master_status_output
       become: yes
 
-    - name: Сохранение Master Log File и Position в факты для использования в других ролях
+    - name: Сохранение Master Log File и Position в факты (для информации, не для настройки)
       set_fact:
         master_log_file: "{{ master_status_output.File }}"
         master_log_pos: "{{ master_status_output.Position }}"
       become: yes
 
-    - name: Ожидание доступности MySQL Replica (после Compose)
+    - name: Ожидание доступности MySQL Replica
       community.mysql.mysql_info:
         login_user: root
         login_password: "{{ mysql_root_password }}"
@@ -175,18 +164,7 @@
       delay: 10
       become: yes
 
-    - name: Импорт дампа на MySQL Replica (используя mysql_db)
-      community.mysql.mysql_db:
-        state: import
-        name: "{{ wp_db_name }}"
-        target: /tmp/mysql_dump/all_databases.sql
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
-        login_host: 127.0.0.1
-        login_port: 3307
-      become: yes
-
-    - name: Настройка репликации на Replica (CHANGE PRIMARY TO)
+    - name: Настройка репликации на Replica (CHANGE PRIMARY TO с Auto-Position)
       community.mysql.mysql_replication:
         mode: changeprimary
         login_user: root
@@ -197,8 +175,7 @@
         primary_user: 'replicator'
         primary_password: "{{ replication_password }}"
         primary_port: 3306
-        primary_log_file: "{{ hostvars[inventory_hostname]['master_log_file'] }}"
-        primary_log_pos: "{{ hostvars[inventory_hostname]['master_log_pos'] }}"
+        primary_auto_position: true
       become: yes
 
     - name: Запуск репликации на Replica (START REPLICA)
@@ -217,20 +194,11 @@
         login_password: "{{ mysql_root_password }}"
         login_host: localhost
         login_port: 3307
-      register: slave_status
-      until: "slave_status.Slave_IO_Running == 'Yes' and slave_status.Slave_SQL_Running == 'Yes'"
-      retries: 30
+      register: replica_status
+      until:
+        - replica_status.Slave_IO_Running == 'Yes'
+        - replica_status.Slave_SQL_Running == 'Yes'
+        - replica_status.Seconds_Behind_Master is defined and replica_status.Seconds_Behind_Master == '0'
+      retries: 20
       delay: 5
-      become: yes
-
-    - name: Удаление временной директории для дампа на хосте
-      ansible.builtin.file:
-        path: /tmp/mysql_dump
-        state: absent
-      become: yes
-
-    - name: Удаление SQL-скрипта инициализации Мастера с хоста
-      ansible.builtin.file:
-        path: /opt/wordpress/ansible/files/mysql_master_init.sql.j2
-        state: absent
       become: yes
