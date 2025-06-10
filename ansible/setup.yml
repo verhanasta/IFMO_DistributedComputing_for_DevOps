@@ -198,7 +198,7 @@
       until:
         - replica_status.Slave_IO_Running == 'Yes'
         - replica_status.Slave_SQL_Running == 'Yes'
-        - replica_status.Seconds_Behind_Master is defined and replica_status.Seconds_Behind_Master == '0'
+        - replica_status.Seconds_Behind_Master is defined and replica_status.Seconds_Behind_Master | string == '0'
       retries: 20
       delay: 5
       become: yes
