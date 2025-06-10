@@ -134,11 +134,16 @@
         mode: '0755'
       become: yes
 
-    - name: Создание дампа всех баз данных MySQL Master (через mysqldump на хосте)
-      ansible.builtin.shell: |
-        mysqldump -h 127.0.0.1 -P 3306 -u ansible_admin -p'{{ ansible_pass }}' --all-databases --single-transaction --set-gtid-purged=OFF > /tmp/mysql_dump/all_databases.sql
-      args:
-        creates: /tmp/mysql_dump/all_databases.sql
+    - name: Создание дампа всех баз данных MySQL Master (используя mysql_db)
+      community.mysql.mysql_db:
+        state: dump
+        name: "*"
+        target: /tmp/mysql_dump/all_databases.sql
+        dump_opts: --single-transaction --set-gtid-purged=OFF
+        login_user: ansible_admin
+        login_password: "{{ ansible_pass }}"
+        login_host: 127.0.0.1
+        login_port: 3306
       become: yes
 
     - name: Получение позиции бинарного лога Мастера (после дампа)
@@ -169,11 +174,15 @@
       delay: 10
       become: yes
 
-    - name: Импорт дампа на MySQL Replica (через mysql на хосте)
-      ansible.builtin.shell: |
-        mysql -h 127.0.0.1 -P 3307 -u root -p'{{ mysql_root_password }}' < /tmp/mysql_dump/all_databases.sql
-      args:
-        removes: /tmp/mysql_dump/all_databases.sql
+    - name: Импорт дампа на MySQL Replica (используя mysql_db)
+      community.mysql.mysql_db:
+        state: import
+        name: "*"
+        target: /tmp/mysql_dump/all_databases.sql
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_host: 127.0.0.1
+        login_port: 3307
       become: yes
 
     - name: Настройка репликации на Replica (CHANGE PRIMARY TO)
