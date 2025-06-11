@@ -8,7 +8,7 @@ services:
     volumes:
       - mysql_master_data:/var/lib/mysql
       - ./config/master.cnf:/etc/mysql/conf.d/config.cnf
-      - ./ansible/files/mysql_master_init.sql.j2:/docker-entrypoint-initdb.d/master_init.sql
+      - ./init_scripts:/docker-entrypoint-initdb.d
     networks:
       - wp_network
     ports:
