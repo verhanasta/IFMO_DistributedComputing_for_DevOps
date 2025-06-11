@@ -60,6 +60,13 @@
         name: mysql-client
         state: present
 
+    - name: Создание основной директории для WordPress и MySQL конфигураций
+      ansible.builtin.file:
+        path: /opt/wordpress
+        state: directory
+        mode: '0755'
+      become: yes
+
     - name: Копирование SQL-скрипта инициализации MySQL Master
       ansible.builtin.template:
         src: "files/mysql_master_init.sql.j2"
