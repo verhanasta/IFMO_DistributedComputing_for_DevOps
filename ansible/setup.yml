@@ -92,6 +92,38 @@
         dest: "/opt/wordpress/config/replica.cnf"
         mode: '0644'
 
+    - name: Создание директорий для Prometheus
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - /opt/wordpress/prometheus
+        - /opt/wordpress/grafana/provisioning/dashboards
+        - /opt/wordpress/grafana/provisioning/datasources
+      become: yes
+
+    - name: Копирование конфигурации Prometheus
+      ansible.builtin.template:
+        src: "templates/prometheus.yml.j2"
+        dest: "/opt/wordpress/prometheus/prometheus.yml"
+        mode: '0644'
+      become: yes
+
+    - name: Копирование конфигурации источника данных Grafana
+      ansible.builtin.template:
+        src: "templates/grafana/datasources/datasource.yml.j2"
+        dest: "/opt/wordpress/grafana/provisioning/datasources/datasource.yml"
+        mode: '0644'
+      become: yes
+
+    - name: Копирование конфигурации дашбордов Grafana
+      ansible.builtin.template:
+        src: "templates/grafana/dashboards/dashboards.yml.j2"
+        dest: "/opt/wordpress/grafana/provisioning/dashboards/dashboards.yml"
+        mode: '0644'
+      become: yes
+
     - name: Копирование docker-compose.yml (для всего стека)
       ansible.builtin.template:
         src: "docker-compose.yml.j2"

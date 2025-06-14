@@ -4,4 +4,8 @@ GRANT ALL PRIVILEGES ON *.* TO 'ansible_admin'@'%' WITH GRANT OPTION;
 CREATE USER '{{ wp_db_user }}'@'%' IDENTIFIED BY '{{ wp_db_password }}';
 GRANT ALL PRIVILEGES ON {{ wp_db_name }}.* TO '{{ wp_db_user }}'@'%';
 
+CREATE USER 'exporter'@'%' IDENTIFIED BY '{{ mysql_exporter_password }}';
+GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'%';
+FLUSH PRIVILEGES;
+
 FLUSH PRIVILEGES;

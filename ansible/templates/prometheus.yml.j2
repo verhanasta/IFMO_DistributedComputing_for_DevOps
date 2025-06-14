@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  # Метрики самого Prometheus
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  - job_name: 'mysql_master'
+    static_configs:
+      - targets: ['mysql_master_exporter:9104']
+
+  - job_name: 'mysql_replica'
+    static_configs:
+      - targets: ['mysql_replica_exporter:9104']

@@ -70,10 +70,82 @@ services:
       mysql_master:
         condition: service_healthy
 
+  prometheus:
+    image: prom/prometheus:v2.51.0 # Используйте актуальную версию
+    container_name: prometheus
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus # Для хранения метрик
+    command: --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - wp_network # Добавляем в ту же сеть, чтобы видеть другие контейнеры
+    depends_on:
+      - mysql_master
+      - mysql_replica
+      - wp_app # Зависимость от всех сервисов, которые мониторит
+    restart: always
+
+  grafana:
+    image: grafana/grafana:10.4.2 # Используйте актуальную версию
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/ # Для автоматической настройки дашбордов и источников данных
+    ports:
+      - "3000:3000"
+    networks:
+      - wp_network
+    depends_on:
+      - prometheus
+    restart: always
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:v1.8.0 # Используйте актуальную версию
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    network_mode: host # Важно: для сбора метрик с хоста
+    pid: host
+    volumes:
+      - /:/host:ro,rslave # Монтируем корневую ФС хоста
+    restart: always
+
+  mysql_master_exporter:
+    image: prom/mysqld-exporter:v0.15.0 # Используйте актуальную версию
+    container_name: mysql_master_exporter
+    environment:
+      # Подставьте ваши данные для подключения к MySQL Master
+      MYSQL_DSN: "exporter:{{ mysql_exporter_password }}@(mysql_master:3306)/"
+    ports:
+      - "9104:9104" # Порт по умолчанию для MySQL Exporter
+    networks:
+      - wp_network
+    depends_on:
+      - mysql_master # Дожидаемся запуска мастера
+    restart: always
+
+  mysql_replica_exporter:
+    image: prom/mysqld-exporter:v0.15.0
+    container_name: mysql_replica_exporter
+    environment:
+      # Подставьте ваши данные для подключения к MySQL Replica
+      MYSQL_DSN: "exporter:{{ mysql_exporter_password }}@(mysql_replica:3306)/"
+    ports:
+      - "9105:9104" # Используем другой порт на хосте, но 9104 внутри контейнера
+    networks:
+      - wp_network
+    depends_on:
+      - mysql_replica # Дожидаемся запуска реплики
+    restart: always
+
 volumes:
   wordpress_data:
   mysql_master_data:
   mysql_replica_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   wp_network:

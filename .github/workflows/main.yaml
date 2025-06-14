@@ -3,7 +3,7 @@ name: Deploy WordPress with MySQL Replication
 on:
   push:
     branches:
-      - DZ-2
+      - DZ-3
 
 jobs:
   deploy:
@@ -56,4 +56,5 @@ jobs:
             --extra-vars "wp_db_user=${{ secrets.WP_DB_USER }}" \
             --extra-vars "wp_db_password=${{ secrets.WP_DB_PASSWORD }}" \
             --extra-vars "wp_db_name=${{ secrets.WP_DB_NAME }}" \
-            --extra-vars "ansible_pass=${{ secrets.ANSIBLE_MYSQL_PASSWORD }}"
+            --extra-vars "ansible_pass=${{ secrets.ANSIBLE_MYSQL_PASSWORD }}"\
+            --extra-vars "mysql_exporter_password=${{ secrets.MYSQL_EXPORTER_PASS }}"
