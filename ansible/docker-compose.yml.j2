@@ -116,7 +116,7 @@ services:
     image: prom/mysqld-exporter:v0.15.0
     container_name: mysql_master_exporter
     environment:
-      MYSQL_DSN: "ansible_admin:{{ ansible_pass }}@(mysql_master:3306)/"
+      DATA_SOURCE_NAME: "exporter:{{ mysql_exporter_password }}@(mysql_master:3306)/"
     ports:
       - "9104:9104"
     networks:
@@ -129,7 +129,7 @@ services:
     image: prom/mysqld-exporter:v0.15.0
     container_name: mysql_replica_exporter
     environment:
-      MYSQL_DSN: "ansible_admin:{{ ansible_pass }}@(mysql_replica:3306)/"
+      DATA_SOURCE_NAME: "exporter:{{ mysql_exporter_password }}@(mysql_replica:3306)/"
     ports:
       - "9105:9104"
     networks:
