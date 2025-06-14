@@ -113,7 +113,7 @@ services:
     restart: always
 
   mysql_master_exporter:
-    image: prom/mysqld-exporter:v0.15.0
+    image: prom/mysqld-exporter:latest
     container_name: mysql_master_exporter
     volumes:
       - ./config/master_exporter.my.cnf:/etc/mysql/my.cnf:ro
@@ -126,7 +126,7 @@ services:
     restart: always
 
   mysql_replica_exporter:
-    image: prom/mysqld-exporter:v0.15.0
+    image: prom/mysqld-exporter:latest
     container_name: mysql_replica_exporter
     volumes:
       - ./config/replica_exporter.my.cnf:/etc/mysql/my.cnf:ro
