@@ -13,6 +13,7 @@ ansible-playbook -i ansible/inventory.ini ansible/setup.yml \
 --extra-vars "wp_db_password=ВАШ_WP_DB_ПАРОЛЬ" \
 --extra-vars "wp_db_name=ВАШ_WP_DB_ИМЯ" \
 --extra-vars "repl_user=ВАШ_REPL_ПОЛЬЗОВАТЕЛЬ" \
---extra-vars "replication_password=ВАШ_REPL_ПАРОЛЬ"
+--extra-vars "replication_password=ВАШ_REPL_ПАРОЛЬ"\
+--extra-vars "mysql_exporter_password=ВАШ_EXPORTER_ПАРОЛЬ"
 
 или внесите значение переменных в example_inventory.ini и укажите его в команде запуска.
