@@ -117,6 +117,8 @@ services:
     container_name: mysql_master_exporter
     volumes:
       - ./config/master_exporter.my.cnf:/etc/mysql/my.cnf:ro
+    command:
+      - --config.my-cnf=/etc/mysql/my.cnf
     ports:
       - "9104:9104"
     networks:
@@ -130,6 +132,8 @@ services:
     container_name: mysql_replica_exporter
     volumes:
       - ./config/replica_exporter.my.cnf:/etc/mysql/my.cnf:ro
+    command:
+      - --config.my-cnf=/etc/mysql/my.cnf
     ports:
       - "9105:9104"
     networks:
