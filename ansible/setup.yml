@@ -124,6 +124,26 @@
         mode: '0644'
       become: yes
 
+    - name: Копирование конфигурации mysql_master_exporter
+      ansible.builtin.template:
+        src: templates/exporter.my.cnf.j2
+        dest: /opt/wordpress/config/master_exporter.my.cnf
+        mode: '0644'
+      vars:
+        mysql_exporter_user: exporter
+        mysql_exporter_password: "{{ secrets.MYSQL_EXPORTER_PASS }}"
+        mysql_server_host: mysql_master
+
+    - name: Копирование конфигурации mysql_replica_exporter
+      ansible.builtin.template:
+        src: templates/exporter.my.cnf.j2
+        dest: /opt/wordpress/config/replica_exporter.my.cnf
+        mode: '0644'
+      vars:
+        mysql_exporter_user: exporter
+        mysql_exporter_password: "{{ secrets.MYSQL_EXPORTER_PASS }}"
+        mysql_server_host: mysql_replica
+
     - name: Копирование docker-compose.yml (для всего стека)
       ansible.builtin.template:
         src: "docker-compose.yml.j2"

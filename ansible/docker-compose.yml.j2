@@ -115,8 +115,8 @@ services:
   mysql_master_exporter:
     image: prom/mysqld-exporter:v0.15.0
     container_name: mysql_master_exporter
-    command:
-      - --dsn=exporter:{{ mysql_exporter_password }}@(mysql_master:3306)/
+    volumes:
+      - ./config/master_exporter.my.cnf:/etc/mysql/my.cnf:ro
     ports:
       - "9104:9104"
     networks:
@@ -128,8 +128,8 @@ services:
   mysql_replica_exporter:
     image: prom/mysqld-exporter:v0.15.0
     container_name: mysql_replica_exporter
-    command:
-      - --dsn=exporter:{{ mysql_exporter_password }}@(mysql_replica:3306)/
+    volumes:
+      - ./config/replica_exporter.my.cnf:/etc/mysql/my.cnf:ro
     ports:
       - "9105:9104"
     networks:
