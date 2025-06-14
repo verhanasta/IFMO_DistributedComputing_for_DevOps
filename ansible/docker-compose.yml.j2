@@ -124,7 +124,7 @@ services:
     depends_on:
       - mysql_master
     restart: always
-
+    
   mysql_replica_exporter:
     image: prom/mysqld-exporter:v0.15.0
     container_name: mysql_replica_exporter
