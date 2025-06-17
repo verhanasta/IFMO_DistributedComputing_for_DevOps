@@ -131,7 +131,6 @@
         mode: '0644'
       vars:
         mysql_exporter_user: exporter
-        mysql_exporter_password: "{{ mysql_exporter_password }}"
         mysql_server_host: mysql_master
 
     - name: Копирование конфигурации mysql_replica_exporter
@@ -141,7 +140,6 @@
         mode: '0644'
       vars:
         mysql_exporter_user: exporter
-        mysql_exporter_password: "{{ mysql_exporter_password }}"
         mysql_server_host: mysql_replica
 
     - name: Копирование docker-compose.yml (для всего стека)
