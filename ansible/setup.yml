@@ -126,14 +126,14 @@
 
     - name: Копирование JSON-файла дашборда MySQL Overview
       ansible.builtin.copy:
-        src: "grafana/provisioning/dashboards/mysql_overview.json"
+        src: "templates/grafana/provisioning/dashboards/mysql_overview.json"
         dest: "/opt/wordpress/grafana/provisioning/dashboards/mysql_overview.json"
         mode: '0644'
       become: yes
 
     - name: Копирование JSON-файла дашборда Node Exporter Full
       ansible.builtin.copy:
-        src: "grafana/provisioning/dashboards/node_exporter_full.json"
+        src: "templates/grafana/provisioning/dashboards/node_exporter_full.json"
         dest: "/opt/wordpress/grafana/provisioning/dashboards/node_exporter_full.json"
         mode: '0644'
       become: yes
